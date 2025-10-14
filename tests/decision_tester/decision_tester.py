@@ -1,5 +1,5 @@
 from dotenv import load_dotenv, find_dotenv
-import os, json, datetime
+import re, os, json, datetime
 import numpy as np
 import tqdm
 import argparse
@@ -7,6 +7,8 @@ from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_openai import OpenAIEmbeddings
+
+ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
 class DecisionTester:
     def __init__(self, llm, model_name, all_tests=False, mini=False, local=True, use_rag=False, quant=False):
@@ -170,13 +172,24 @@ class DecisionTester:
         return prompt
 
     def sanitize_output(self, output):
-        output = next((line.strip().lower() for line in output.splitlines() if "Adhering to" in line), None)
-        if 'true' in output:
-            return True
-        elif 'false' in output:
-            return False
-        else:
+        if output is None:
             return None
+        text = str(output)
+
+        # 1) Try to capture the explicit field "Adhering to Human: <True/False>"
+        m = ADHERING_RE.search(text)
+        if m:
+            return m.group(1).lower() == "true"
+
+        # 2) Fallbacks: sometimes models only return "true"/"false" somewhere.
+        #    Be conservative: require standalone word.
+        if re.search(r"\btrue\b", text, re.IGNORECASE):
+            return True
+        if re.search(r"\bfalse\b", text, re.IGNORECASE):
+            return False
+
+        # 3) Couldn't parse
+        return None
 
     def eval_decision_making(self, data_dir, llm, data_name):
         # Load dataset
@@ -207,6 +220,11 @@ class DecisionTester:
                 else:
                     llm_response = self.llm.invoke(prompt).content
                 llm_output = self.sanitize_output(llm_response)
+                
+                if llm_output is None:
+                    # treat as incorrect; optionally log the raw response for debugging
+                    print("WARN: could not parse adherence. Raw response:\n", llm_response[:500])
+                    pass
 
                 # Evaluate the model's response
                 if llm_output == labels[i]:
@@ -251,6 +269,17 @@ class DecisionTester:
                 f.write("-" * 50 + "\n")
         print(f"Logged to {log_file}")
 
+def infer_chat_template_from_model(model_id: str) -> str:
+    mid = model_id.lower()
+    if "phi-3" in mid or "phi-3.5" in mid:
+        return "phi-3"
+    if "qwen" in mid:
+        return "qwen-2.5"
+    if "llama-3.2" in mid or "llama-3.1" in mid or "llama-3" in mid:
+        return "llama-3.2"
+    # default (existing behavior) – you can raise or fall back to qwen
+    return "qwen-2.5"
+
 if __name__ == '__main__':
     # Fetch all valid dataset names by removing the `.json` extension
     possible_datasets = sorted([
@@ -263,7 +292,7 @@ if __name__ == '__main__':
     local_models = [os.path.join('models', f) for f in os.listdir(path='models')]
     
     parser = argparse.ArgumentParser(description='Test the reasoning pipeline on a single scenario.')
-    parser.add_argument('--model', type=str, default='gpt-4o', choices=['gpt-4o', 'unsloth/Qwen2.5-7B-Instruct', 'unsloth/Phi-3-mini-4k-instruct', 'nibauman/RobotxLLM_Qwen7B_SFT'] + local_models, help='Choose the model to use.')
+    parser.add_argument('--model', type=str, default='local', choices=['gpt-4o', 'unsloth/Qwen2.5-7B-Instruct', 'unsloth/Phi-3-mini-4k-instruct', 'unsloth/Llama-3.2-1B-Instruct', 'nibauman/RobotxLLM_Qwen7B_SFT'] + local_models, help='Choose the model to use.')
     parser.add_argument('--rag', action='store_true', help='Whether to use RAG.')
     parser.add_argument(
         '--dataset',
@@ -274,6 +303,17 @@ if __name__ == '__main__':
     )
     parser.add_argument('--mini', action='store_true', help='Whether to run a mini test.')
     parser.add_argument('--quant', action='store_true', help='If you want to use Q5')
+    parser.add_argument("--ssh_interactive", action="store_true",
+                    help="Use interactive SSH REPL instead of local/Unsloth model.")
+    parser.add_argument("--ssh_host", type=str, default=None, help="SSH host (e.g., finsteraarhorn.ee.ethz.ch)")
+    parser.add_argument("--ssh_user", type=str, default=None, help="SSH user (e.g., sem25h27)")
+    parser.add_argument("--ssh_workdir", type=str, default="voyager-sdk")
+    parser.add_argument("--ssh_venv", type=str, default="venv/bin/activate")
+    parser.add_argument("--ssh_run", type=str, default="./inference_llm.py llama-3-2-1b-1024-4core-static")
+    parser.add_argument("--ssh_timeout", type=int, default=120)
+    parser.add_argument("--ssh_password", type=str, default=None)
+    parser.add_argument("--ssh_key_passphrase", type=str, default=None)
+    parser.add_argument("--ssh_2fa_code", type=str, default=None)
     args = parser.parse_args()
 
     load_dotenv(dotenv_path=find_dotenv())
@@ -289,7 +329,7 @@ if __name__ == '__main__':
         local = True
         # if args.model is not locally available, then pull from HuggingFace
         model_dir = args.model
-        chat_template = 'qwen-2.5' if 'qwen' in args.model else 'phi-3'
+        chat_template = infer_chat_template_from_model(args.model)
         if args.quant:
             from inference.inf_gguf import RaceLLMGGGUF
             # Find gguf in model_dir
@@ -298,7 +338,17 @@ if __name__ == '__main__':
             print(f"Using model {gguf_name} from {model_dir}")
         else:
             from inference.inf_pipeline import RaceLLMPipeline
-            llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)
+            from inference.remote_pipeline import RemoteLLMPipeline
+            
+            if getattr(args, "ssh_interactive", False):
+                assert args.ssh_host and args.ssh_user, "--ssh_host and --ssh_user are required for --ssh_interactive"
+                print("Using remote interactive SSH LLM pipeline")
+                llm = RemoteLLMPipeline(ssh_user=args.ssh_user, ssh_host=args.ssh_host, workdir=args.ssh_workdir,
+                                        venv_activate=args.ssh_venv, run_cmd=args.ssh_run, prompt_timeout=args.ssh_timeout,
+                                        ssh_password=args.ssh_password, ssh_key_passphrase=args.ssh_key_passphrase, ssh_2fa_code=args.ssh_2fa_code)
+                print("Generating LLM...")
+            else:
+                llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)
             print(f"Using model {args.model} from {model_dir}")
 
     # Evaluate the decision making on all datasets

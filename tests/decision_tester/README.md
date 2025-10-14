@@ -58,3 +58,19 @@ OPENAI_API_TOKEN=your_openai_key
 ---
 
 Happy Testing! 🚗💨
+
+
+# Remote testing
+Command to use:
+```bash
+pip3 install pexpect
+python3 -m tests.decision_tester.decision_tester \
+  --dataset all --mini \
+  --ssh_interactive \
+  --ssh_host finsteraarhorn.ee.ethz.ch \
+  --ssh_user sem25h27 \
+  --ssh_workdir voyager-sdk \
+  --ssh_venv venv/bin/activate \
+  --ssh_run "./inference_llm.py llama-3-2-1b-1024-4core-static" \
+  --ssh_timeout 180
+```

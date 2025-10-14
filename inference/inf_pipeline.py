@@ -5,7 +5,7 @@ import os, time
 import numpy as np
 import torch
 
-CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5"]
+CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5", "llama-3.2"]
 
 class RaceLLMPipeline(Pipeline):
     def __init__(self, chat_template, model_dir=None, max_seq_length=2048, max_new_tokes=512, dtype=torch.float16, load_in_4bit=False, model=None, tokenizer=None):
@@ -49,6 +49,13 @@ class RaceLLMPipeline(Pipeline):
             tokenizer = get_chat_template(
                 tokenizer,
                 chat_template="qwen-2.5",
+                mapping={"role": "role", "content": "content", "user": "user", "assistant": "assistant"},
+            )
+        elif chat_template == "llama-3.2":
+            tokenizer = get_chat_template(
+                tokenizer,
+                chat_template="llama-3.1",  # <-- Unsloth uses the Llama-3.x template bucket
+                # Llama 3.x uses the standard role/content schema, so default mapping works.
                 mapping={"role": "role", "content": "content", "user": "user", "assistant": "assistant"},
             )
         else:
@@ -107,7 +114,7 @@ class RaceLLMPipeline(Pipeline):
             # Filter out the chat template, we want what is between <|assistant|> and <|end|>
             model_outputs = [output.split("<|assistant|>")[1].split("<|end|>")[0].strip() for output in model_outputs]
             return model_outputs[0], None, None
-        elif self.chat_template == "qwen-2.5":
+        elif self.chat_template in ("qwen-2.5", "llama-3.2"):
             # Filter out the chat template for Qwen-2.5, extract content between <|im_start|>assistant and <|im_end|>
             model_outputs = [
                 output.split("<|im_start|>assistant")[1].split("<|im_end|>")[0].strip() 
