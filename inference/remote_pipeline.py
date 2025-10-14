@@ -63,7 +63,7 @@ class RemoteLLMPipeline:
 
         # SEE EVERYTHING: stream SSH output to stdout for debugging.
         # Comment this out once stable.
-        self.child.logfile = sys.stdout
+        # self.child.logfile = sys.stdout
 
         # Common first-time and auth prompts we need to handle
         auth_patterns = [
