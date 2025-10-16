@@ -314,6 +314,7 @@ if __name__ == '__main__':
     parser.add_argument("--ssh_password", type=str, default=None)
     parser.add_argument("--ssh_key_passphrase", type=str, default=None)
     parser.add_argument("--ssh_2fa_code", type=str, default=None)
+    parser.add_argument("--ssh_verbose", action="store_true", help="If using SSH, whether to print all SSH output to stdout.")
     args = parser.parse_args()
 
     load_dotenv(dotenv_path=find_dotenv())
@@ -344,8 +345,9 @@ if __name__ == '__main__':
                 assert args.ssh_host and args.ssh_user, "--ssh_host and --ssh_user are required for --ssh_interactive"
                 print("Using remote interactive SSH LLM pipeline")
                 llm = RemoteLLMPipeline(ssh_user=args.ssh_user, ssh_host=args.ssh_host, workdir=args.ssh_workdir,
-                                        venv_activate=args.ssh_venv, run_cmd=args.ssh_run, prompt_timeout=args.ssh_timeout,
-                                        ssh_password=args.ssh_password, ssh_key_passphrase=args.ssh_key_passphrase, ssh_2fa_code=args.ssh_2fa_code)
+                                        venv_activate=args.ssh_venv, run_cmd=args.ssh_run,
+                                        ssh_password=args.ssh_password, ssh_key_passphrase=args.ssh_key_passphrase, 
+                                        ssh_2fa_code=args.ssh_2fa_code, ssh_verbose=args.ssh_verbose, ssh_opts="-T")
                 print("Generating LLM...")
             else:
                 llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)
