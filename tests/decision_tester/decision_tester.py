@@ -303,6 +303,8 @@ if __name__ == '__main__':
     )
     parser.add_argument('--mini', action='store_true', help='Whether to run a mini test.')
     parser.add_argument('--quant', action='store_true', help='If you want to use Q5')
+    
+    # Remote SSH Axelera board
     parser.add_argument("--ssh_interactive", action="store_true",
                     help="Use interactive SSH REPL instead of local/Unsloth model.")
     parser.add_argument("--ssh_host", type=str, default=None, help="SSH host (e.g., finsteraarhorn.ee.ethz.ch)")
@@ -315,6 +317,16 @@ if __name__ == '__main__':
     parser.add_argument("--ssh_key_passphrase", type=str, default=None)
     parser.add_argument("--ssh_2fa_code", type=str, default=None)
     parser.add_argument("--ssh_verbose", action="store_true", help="If using SSH, whether to print all SSH output to stdout.")
+
+    # Local Axelera board
+    parser.add_argument("--ax_local", action="store_true",
+                        help="Run inference locally on this server (no SSH), via ./inference_llm.py --prompt.")
+    parser.add_argument("--local_workdir", type=str, default="voyager-sdk")
+    parser.add_argument("--local_venv", type=str, default="venv/bin/activate")
+    parser.add_argument("--local_run", type=str, default="./inference_llm.py llama-3-2-3b-1024-4core-static")
+    parser.add_argument("--local_timeout", type=int, default=300)
+    parser.add_argument("--local_verbose", action="store_true")
+
     args = parser.parse_args()
 
     load_dotenv(dotenv_path=find_dotenv())
@@ -338,16 +350,20 @@ if __name__ == '__main__':
             llm = RaceLLMGGGUF(model_dir=model_dir, gguf_name=gguf_name)
             print(f"Using model {gguf_name} from {model_dir}")
         else:
+            from inference.local_pipeline import LocalLLMPipeline
             from inference.inf_pipeline import RaceLLMPipeline
             from inference.remote_pipeline import RemoteLLMPipeline
             
-            if getattr(args, "ssh_interactive", False):
-                assert args.ssh_host and args.ssh_user, "--ssh_host and --ssh_user are required for --ssh_interactive"
+            if getattr(args, "ax_local", False):
+                print("Using local interactive LLM pipeline (no SSH)")
+                llm = LocalLLMPipeline(workdir=args.local_workdir, venv_activate=args.local_venv,
+                    run_cmd=args.local_run, timeout_sec=args.local_timeout, verbose=args.local_verbose)
+            elif getattr(args, "ssh_interactive", False):
                 print("Using remote interactive SSH LLM pipeline")
-                llm = RemoteLLMPipeline(ssh_user=args.ssh_user, ssh_host=args.ssh_host, workdir=args.ssh_workdir,
-                                        venv_activate=args.ssh_venv, run_cmd=args.ssh_run,
-                                        ssh_password=args.ssh_password, ssh_key_passphrase=args.ssh_key_passphrase, 
-                                        ssh_2fa_code=args.ssh_2fa_code, ssh_verbose=args.ssh_verbose, ssh_opts="-T")
+                llm = RemoteLLMPipeline(ssh_user=args.ssh_user, ssh_host=args.ssh_host, 
+                    workdir=args.ssh_workdir, venv_activate=args.ssh_venv, run_cmd=args.ssh_run, 
+                    ssh_password=args.ssh_password, ssh_key_passphrase=args.ssh_key_passphrase, 
+                    ssh_2fa_code=args.ssh_2fa_code, ssh_verbose=args.ssh_verbose, ssh_opts="-T")
                 print("Generating LLM...")
             else:
                 llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)

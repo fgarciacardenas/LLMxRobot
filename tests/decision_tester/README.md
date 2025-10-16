@@ -60,7 +60,7 @@ OPENAI_API_TOKEN=your_openai_key
 Happy Testing! 🚗💨
 
 
-# Remote testing
+# Remote Axelera board testing
 Command to use:
 ```bash
 pip3 install pexpect
@@ -71,6 +71,18 @@ python3 -m tests.decision_tester.decision_tester \
   --ssh_user sem25h27 \
   --ssh_workdir voyager-sdk \
   --ssh_venv venv/bin/activate \
-  --ssh_run "./inference_llm.py llama-3-2-1b-1024-4core-static" \
-  --ssh_timeout 180
+  --ssh_run "./inference_llm.py llama-3-2-3b-1024-4core-static" \
+  --ssh_timeout 360 --ssh_password <pw>
+```
+
+# Local Axelera board testing
+```bash
+python3 -m tests.decision_tester.decision_tester \
+  --dataset all --mini \
+  --ax_local \
+  --local_workdir ~/voyager-sdk \
+  --local_venv venv/bin/activate \
+  --local_run "./inference_llm.py llama-3-2-3b-1024-4core-static" \
+  --local_timeout 420 \
+  --local_verbose
 ```
