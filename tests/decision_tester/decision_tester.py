@@ -292,7 +292,7 @@ if __name__ == '__main__':
     local_models = [os.path.join('models', f) for f in os.listdir(path='models')]
     
     parser = argparse.ArgumentParser(description='Test the reasoning pipeline on a single scenario.')
-    parser.add_argument('--model', type=str, default='local', choices=['gpt-4o', 'unsloth/Qwen2.5-7B-Instruct', 'unsloth/Phi-3-mini-4k-instruct', 'unsloth/Llama-3.2-1B-Instruct', 'nibauman/RobotxLLM_Qwen7B_SFT'] + local_models, help='Choose the model to use.')
+    parser.add_argument('--model', type=str, default='local', choices=['gpt-4o', 'unsloth/Qwen2.5-7B-Instruct', 'unsloth/Phi-3-mini-4k-instruct', 'unsloth/Llama-3.2-3B-Instruct', 'nibauman/RobotxLLM_Qwen7B_SFT'] + local_models, help='Choose the model to use.')
     parser.add_argument('--rag', action='store_true', help='Whether to use RAG.')
     parser.add_argument(
         '--dataset',
@@ -324,7 +324,6 @@ if __name__ == '__main__':
     parser.add_argument("--local_workdir", type=str, default="voyager-sdk")
     parser.add_argument("--local_venv", type=str, default="venv/bin/activate")
     parser.add_argument("--local_run", type=str, default="./inference_llm.py llama-3-2-3b-1024-4core-static")
-    parser.add_argument("--local_timeout", type=int, default=300)
     parser.add_argument("--local_verbose", action="store_true")
 
     args = parser.parse_args()
@@ -357,7 +356,7 @@ if __name__ == '__main__':
             if getattr(args, "ax_local", False):
                 print("Using local interactive LLM pipeline (no SSH)")
                 llm = LocalLLMPipeline(workdir=args.local_workdir, venv_activate=args.local_venv,
-                    run_cmd=args.local_run, timeout_sec=args.local_timeout, verbose=args.local_verbose)
+                    run_cmd=args.local_run, verbose=args.local_verbose)
             elif getattr(args, "ssh_interactive", False):
                 print("Using remote interactive SSH LLM pipeline")
                 llm = RemoteLLMPipeline(ssh_user=args.ssh_user, ssh_host=args.ssh_host, 
