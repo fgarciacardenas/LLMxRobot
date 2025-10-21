@@ -7,7 +7,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_openai import OpenAIEmbeddings
-from inference.token_utils import get_tokenizer, count_tokens
+from inference.token_utils import get_tokenizer, count_tokens, RunningStats
 
 ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
@@ -31,13 +31,11 @@ class DecisionTester:
             self.index = VectorstoreIndexCreator(embedding=OpenAIEmbeddings(api_key=OPENAI_API_TOKEN), text_splitter=self.splitter).from_loaders([memories_loader])
             self.mem_nb = 5
 
-        # Running averages
+        # Tokenizer online stats
         self.tokenizer = get_tokenizer(self.model_name)
-        self.prompt_tok_total = 0
-        self.rag_tok_total = 0
-        self.output_tok_total = 0
-        self.prompt_tok_count = 0
-        self.output_tok_count = 0
+        self.prompt_stats_overall = RunningStats()
+        self.rag_stats_overall    = RunningStats()
+        self.output_stats_overall = RunningStats()
 
         if self.mini_eval:
             print("RUNNING MINI TEST")
@@ -149,7 +147,7 @@ class DecisionTester:
             data = json.load(f)
         return data
 
-    def build_prompt(self, human_prompt, robot_state) -> str:
+    def build_prompt(self, human_prompt, robot_state):
         # Hints are empty if not using RAG
         hints = ''
         if self.use_rag:
@@ -189,8 +187,7 @@ class DecisionTester:
         if m:
             return m.group(1).lower() == "true"
 
-        # 2) Fallbacks: sometimes models only return "true"/"false" somewhere.
-        #    Be conservative: require standalone word.
+        # 2) Fallbacks: standalone true/false
         if re.search(r"\btrue\b", text, re.IGNORECASE):
             return True
         if re.search(r"\bfalse\b", text, re.IGNORECASE):
@@ -204,13 +201,17 @@ class DecisionTester:
         print(f" Evaluating decision making on {data_name}")
         data_set = self.load_dataset(data_dir)
 
-        log_file = os.path.join(self.logs_dir, f"test_log_{self.model_name}_{data_name}.txt") if self.all_tests else os.path.join(self.logs_dir, f"test_log_{self.model_name}_{self.full_or_mini}_{data_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt")
+        log_file = os.path.join(
+            self.logs_dir,
+            f"test_log_{self.model_name}_{data_name}.txt"
+        ) if self.all_tests else os.path.join(
+            self.logs_dir,
+            f"test_log_{self.model_name}_{self.full_or_mini}_{data_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+        )
 
         # downsample the data set if mini by 80%
         if self.mini_eval:
             data_set = data_set[::5]
-        else:
-            data_set = data_set
 
         correct_answer = 0
         incorrect_entries = []
@@ -219,15 +220,22 @@ class DecisionTester:
             correct_case_answer = 0
             print(f"Testing: {test['human_prompt']}")
             labels = test['evaluation_function'](data_set)
+
+            # Per-test online stats
+            ptoks_case = RunningStats()
+            rtoks_case = RunningStats()
+            otoks_case = RunningStats()
+
             for i, data in enumerate(tqdm.tqdm(data_set)):
                 prompt, rag_text = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
 
                 # Token accounting (prompt & RAG)
-                ptoks = count_tokens(prompt, self.tokenizer)
-                rtoks = count_tokens(rag_text, self.tokenizer)
-                self.prompt_tok_total += ptoks
-                self.rag_tok_total += rtoks
-                self.prompt_tok_count += 1
+                ptoks = count_tokens(prompt, self.tokenizer) if self.tokenizer else 0
+                rtoks = count_tokens(rag_text, self.tokenizer) if self.tokenizer else 0
+                ptoks_case.update(ptoks)
+                rtoks_case.update(rtoks)
+                self.prompt_stats_overall.update(ptoks)
+                self.rag_stats_overall.update(rtoks)
 
                 # Get the model's response
                 if self.local_inference:
@@ -236,13 +244,13 @@ class DecisionTester:
                     llm_response = self.llm.invoke(prompt).content
 
                 # Token accounting (output)
-                otoks = count_tokens(llm_response, self.tokenizer)
-                self.output_tok_total += otoks
-                self.output_tok_count += 1
+                otoks = count_tokens(llm_response, self.tokenizer) if self.tokenizer else 0
+                otoks_case.update(otoks)
+                self.output_stats_overall.update(otoks)
 
                 # Evaluate
                 llm_output = self.sanitize_output(llm_response)
-                
+
                 if llm_output is None:
                     # treat as incorrect; optionally log the raw response for debugging
                     print("WARN: could not parse adherence. Raw response:\n", llm_response[:500])
@@ -265,6 +273,22 @@ class DecisionTester:
             case_accuracy = correct_case_answer / len(data_set)
             case_accuracies.append(case_accuracy)
             print(f"Case {test['human_prompt']} accuracy: {case_accuracy:.2%}")
+
+            # Per-test token stats (mean/std/min/max)
+            p_mean, p_std, p_min, p_max = ptoks_case.as_tuple()
+            r_mean, r_std, r_min, r_max = rtoks_case.as_tuple()
+            o_mean, o_std, o_min, o_max = otoks_case.as_tuple()
+
+            print(f"[TOKENS] {test['human_prompt']}")
+            print(f"  Prompt : mean {p_mean:.1f}, std {p_std:.1f}, min {p_min}, max {p_max}")
+            print(f"  RAG    : mean {r_mean:.1f}, std {r_std:.1f}, min {r_min}, max {r_max}")
+            print(f"  Output : mean {o_mean:.1f}, std {o_std:.1f}, min {o_min}, max {o_max}")
+
+            with open(log_file, 'a') as f:
+                f.write(f"[TOKENS] {test['human_prompt']}\n")
+                f.write(f"  Prompt : mean {p_mean:.1f}, std {p_std:.1f}, min {p_min}, max {p_max}\n")
+                f.write(f"  RAG    : mean {r_mean:.1f}, std {r_std:.1f}, min {r_min}, max {r_max}\n")
+                f.write(f"  Output : mean {o_mean:.1f}, std {o_std:.1f}, min {o_min}, max {o_max}\n")
 
         accuracy = correct_answer / (len(data_set) * len(self.TEST_CASES))
         print(f"Total Accuracy for data: {data_dir}: {accuracy:.2%}")
@@ -291,18 +315,22 @@ class DecisionTester:
                 f.write("-" * 50 + "\n")
         print(f"Logged to {log_file}")
 
-        avg_prompt_tok = (self.prompt_tok_total / max(1, self.prompt_tok_count))
-        avg_rag_tok = (self.rag_tok_total / max(1, self.prompt_tok_count))
-        avg_output_tok = (self.output_tok_total / max(1, self.output_tok_count))
-        print(f"Avg prompt tokens: {avg_prompt_tok:.1f}")
-        print(f"Avg RAG tokens:    {avg_rag_tok:.1f}")
-        print(f"Avg output tokens: {avg_output_tok:.1f}")
+        # Overall token stats (mean/std/min/max)
+        P_mean, P_std, P_min, P_max = self.prompt_stats_overall.as_tuple()
+        R_mean, R_std, R_min, R_max = self.rag_stats_overall.as_tuple()
+        O_mean, O_std, O_min, O_max = self.output_stats_overall.as_tuple()
+
+        print("\n=== OVERALL TOKEN STATS ===")
+        print(f"Prompt : mean {P_mean:.1f}, std {P_std:.1f}, min {P_min}, max {P_max}")
+        print(f"RAG    : mean {R_mean:.1f}, std {R_std:.1f}, min {R_min}, max {R_max}")
+        print(f"Output : mean {O_mean:.1f}, std {O_std:.1f}, min {O_min}, max {O_max}")
 
         with open(log_file, 'a') as f:
             f.write("-" * 50 + "\n")
-            f.write(f"Avg prompt tokens: {avg_prompt_tok:.1f}\n")
-            f.write(f"Avg RAG tokens:    {avg_rag_tok:.1f}\n")
-            f.write(f"Avg output tokens: {avg_output_tok:.1f}\n")
+            f.write("=== OVERALL TOKEN STATS ===\n")
+            f.write(f"Prompt : mean {P_mean:.1f}, std {P_std:.1f}, min {P_min}, max {P_max}\n")
+            f.write(f"RAG    : mean {R_mean:.1f}, std {R_std:.1f}, min {R_min}, max {R_max}\n")
+            f.write(f"Output : mean {O_mean:.1f}, std {O_std:.1f}, min {O_min}, max {O_max}\n")
 
 def infer_chat_template_from_model(model_id: str) -> str:
     mid = model_id.lower()
@@ -312,22 +340,26 @@ def infer_chat_template_from_model(model_id: str) -> str:
         return "qwen-2.5"
     if "llama-3.2" in mid or "llama-3.1" in mid or "llama-3" in mid:
         return "llama-3.2"
-    # default (existing behavior) – you can raise or fall back to qwen
     return "qwen-2.5"
 
 if __name__ == '__main__':
     # Fetch all valid dataset names by removing the `.json` extension
     possible_datasets = sorted([
-        os.path.splitext(p=file)[0] 
-        for file in os.listdir(path="tests/decision_tester/robot_states") 
+        os.path.splitext(p=file)[0]
+        for file in os.listdir(path="tests/decision_tester/robot_states")
         if file.endswith('.json')
     ])
-    
+
     # Fetch local models from the models directory
     local_models = [os.path.join('models', f) for f in os.listdir(path='models')]
-    
     parser = argparse.ArgumentParser(description='Test the reasoning pipeline on a single scenario.')
-    parser.add_argument('--model', type=str, default='local', choices=['gpt-4o', 'unsloth/Qwen2.5-7B-Instruct', 'unsloth/Phi-3-mini-4k-instruct', 'unsloth/Llama-3.2-3B-Instruct', 'nibauman/RobotxLLM_Qwen7B_SFT'] + local_models, help='Choose the model to use.')
+    parser.add_argument('--model', type=str, default='local', choices=[
+        'gpt-4o',
+        'unsloth/Qwen2.5-7B-Instruct',
+        'unsloth/Phi-3-mini-4k-instruct',
+        'unsloth/Llama-3.2-3B-Instruct',
+        'nibauman/RobotxLLM_Qwen7B_SFT'
+    ] + local_models, help='Choose the model to use.')
     parser.add_argument('--rag', action='store_true', help='Whether to use RAG.')
     parser.add_argument(
         '--dataset',
@@ -338,10 +370,10 @@ if __name__ == '__main__':
     )
     parser.add_argument('--mini', action='store_true', help='Whether to run a mini test.')
     parser.add_argument('--quant', action='store_true', help='If you want to use Q5')
-    
+
     # Remote SSH Axelera board
     parser.add_argument("--ssh_interactive", action="store_true",
-                    help="Use interactive SSH REPL instead of local/Unsloth model.")
+                        help="Use interactive SSH REPL instead of local/Unsloth model.")
     parser.add_argument("--ssh_host", type=str, default=None, help="SSH host (e.g., finsteraarhorn.ee.ethz.ch)")
     parser.add_argument("--ssh_user", type=str, default=None, help="SSH user (e.g., sem25h27)")
     parser.add_argument("--ssh_workdir", type=str, default="voyager-sdk")
@@ -352,8 +384,9 @@ if __name__ == '__main__':
     parser.add_argument("--ssh_key_passphrase", type=str, default=None)
     parser.add_argument("--ssh_2fa_code", type=str, default=None)
     parser.add_argument("--ssh_verbose", action="store_true", help="If using SSH, whether to print all SSH output to stdout.")
+    parser.add_argument("--ssh_opts", type=str, default="-T", help="Extra ssh options (default disables pseudo-tty).")
 
-    # Local Axelera board
+    # Local Axelera board (no SSH)
     parser.add_argument("--ax_local", action="store_true",
                         help="Run inference locally on this server (no SSH), via ./inference_llm.py --prompt.")
     parser.add_argument("--local_workdir", type=str, default="voyager-sdk")
@@ -374,7 +407,6 @@ if __name__ == '__main__':
         llm = ChatOpenAI(model_name='gpt-4o', openai_api_key=OPENAI_API_TOKEN)
     else:
         local = True
-        # if args.model is not locally available, then pull from HuggingFace
         model_dir = args.model
         chat_template = infer_chat_template_from_model(args.model)
         if args.quant:
@@ -387,17 +419,29 @@ if __name__ == '__main__':
             from inference.local_pipeline import LocalLLMPipeline
             from inference.inf_pipeline import RaceLLMPipeline
             from inference.remote_pipeline import RemoteLLMPipeline
-            
+
             if getattr(args, "ax_local", False):
                 print("Using local interactive LLM pipeline (no SSH)")
-                llm = LocalLLMPipeline(workdir=args.local_workdir, venv_activate=args.local_venv,
-                    run_cmd=args.local_run, verbose=args.local_verbose)
+                llm = LocalLLMPipeline(
+                    workdir=args.local_workdir,
+                    venv_activate=args.local_venv,
+                    run_cmd=args.local_run,
+                    verbose=args.local_verbose
+                )
             elif getattr(args, "ssh_interactive", False):
                 print("Using remote interactive SSH LLM pipeline")
-                llm = RemoteLLMPipeline(ssh_user=args.ssh_user, ssh_host=args.ssh_host, 
-                    workdir=args.ssh_workdir, venv_activate=args.ssh_venv, run_cmd=args.ssh_run, 
-                    ssh_password=args.ssh_password, ssh_key_passphrase=args.ssh_key_passphrase, 
-                    ssh_2fa_code=args.ssh_2fa_code, ssh_verbose=args.ssh_verbose, ssh_opts="-T")
+                llm = RemoteLLMPipeline(
+                    ssh_user=args.ssh_user,
+                    ssh_host=args.ssh_host,
+                    workdir=args.ssh_workdir,
+                    venv_activate=args.ssh_venv,
+                    run_cmd=args.ssh_run,
+                    ssh_password=args.ssh_password,
+                    ssh_key_passphrase=args.ssh_key_passphrase,
+                    ssh_2fa_code=args.ssh_2fa_code,
+                    ssh_verbose=args.ssh_verbose,
+                    ssh_opts=args.ssh_opts
+                )
                 print("Generating LLM...")
             else:
                 llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)

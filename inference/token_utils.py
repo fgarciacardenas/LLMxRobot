@@ -35,3 +35,36 @@ def count_tokens(text: str, tok) -> int:
         return 0
     # fast tokenizers: .encode returns a list of ids
     return len(tok.encode(text))
+
+class RunningStats:
+    """Online mean/variance + min/max via Welford. std is sample std (ddof=1)."""
+    __slots__ = ("n", "mean", "M2", "min", "max", "total")
+    def __init__(self):
+        self.n = 0
+        self.mean = 0.0
+        self.M2 = 0.0
+        self.min = None
+        self.max = None
+        self.total = 0  # optional: sum of values
+
+    def update(self, x: int | float):
+        if x is None:
+            return
+        x = float(x)
+        self.n += 1
+        self.total += x
+        if self.min is None or x < self.min:
+            self.min = x
+        if self.max is None or x > self.max:
+            self.max = x
+        delta = x - self.mean
+        self.mean += delta / self.n
+        self.M2 += delta * (x - self.mean)
+
+    @property
+    def std(self) -> float:
+        return (self.M2 / (self.n - 1)) ** 0.5 if self.n > 1 else 0.0
+
+    def as_tuple(self):
+        # mean, std, min, max as requested
+        return (self.mean, self.std, int(self.min or 0), int(self.max or 0))
