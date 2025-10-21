@@ -7,6 +7,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_openai import OpenAIEmbeddings
+from inference.token_utils import get_tokenizer, count_tokens
 
 ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
@@ -30,6 +31,13 @@ class DecisionTester:
             self.index = VectorstoreIndexCreator(embedding=OpenAIEmbeddings(api_key=OPENAI_API_TOKEN), text_splitter=self.splitter).from_loaders([memories_loader])
             self.mem_nb = 5
 
+        # Running averages
+        self.tokenizer = get_tokenizer(self.model_name)
+        self.prompt_tok_total = 0
+        self.rag_tok_total = 0
+        self.output_tok_total = 0
+        self.prompt_tok_count = 0
+        self.output_tok_count = 0
 
         if self.mini_eval:
             print("RUNNING MINI TEST")
@@ -169,7 +177,7 @@ class DecisionTester:
         Explanation: <Brief Explanation> \n
         Adhering to Human: <True/False> \n
         """
-        return prompt
+        return prompt, hints
 
     def sanitize_output(self, output):
         if output is None:
@@ -212,13 +220,27 @@ class DecisionTester:
             print(f"Testing: {test['human_prompt']}")
             labels = test['evaluation_function'](data_set)
             for i, data in enumerate(tqdm.tqdm(data_set)):
-                prompt = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
+                prompt, rag_text = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
+
+                # Token accounting (prompt & RAG)
+                ptoks = count_tokens(prompt, self.tokenizer)
+                rtoks = count_tokens(rag_text, self.tokenizer)
+                self.prompt_tok_total += ptoks
+                self.rag_tok_total += rtoks
+                self.prompt_tok_count += 1
 
                 # Get the model's response
                 if self.local_inference:
                     llm_response, _, _ = self.llm(prompt)
                 else:
                     llm_response = self.llm.invoke(prompt).content
+
+                # Token accounting (output)
+                otoks = count_tokens(llm_response, self.tokenizer)
+                self.output_tok_total += otoks
+                self.output_tok_count += 1
+
+                # Evaluate
                 llm_output = self.sanitize_output(llm_response)
                 
                 if llm_output is None:
@@ -268,6 +290,19 @@ class DecisionTester:
                 f.write(f"Expected Output: {entry['expected_output']}\n")
                 f.write("-" * 50 + "\n")
         print(f"Logged to {log_file}")
+
+        avg_prompt_tok = (self.prompt_tok_total / max(1, self.prompt_tok_count))
+        avg_rag_tok = (self.rag_tok_total / max(1, self.prompt_tok_count))
+        avg_output_tok = (self.output_tok_total / max(1, self.output_tok_count))
+        print(f"Avg prompt tokens: {avg_prompt_tok:.1f}")
+        print(f"Avg RAG tokens:    {avg_rag_tok:.1f}")
+        print(f"Avg output tokens: {avg_output_tok:.1f}")
+
+        with open(log_file, 'a') as f:
+            f.write("-" * 50 + "\n")
+            f.write(f"Avg prompt tokens: {avg_prompt_tok:.1f}\n")
+            f.write(f"Avg RAG tokens:    {avg_rag_tok:.1f}\n")
+            f.write(f"Avg output tokens: {avg_output_tok:.1f}\n")
 
 def infer_chat_template_from_model(model_id: str) -> str:
     mid = model_id.lower()
