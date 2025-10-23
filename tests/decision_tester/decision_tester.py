@@ -8,11 +8,13 @@ from langchain_text_splitters import CharacterTextSplitter
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_openai import OpenAIEmbeddings
 from inference.token_utils import get_tokenizer, count_tokens, RunningStats
+from inference.rag_offline import OfflineRetriever, LocalEmbeddings
 
 ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
 class DecisionTester:
-    def __init__(self, llm, model_name, all_tests=False, mini=False, local=True, use_rag=False, quant=False):
+    def __init__(self, llm, model_name, all_tests=False, mini=False, local=True, use_rag=False, 
+                 quant=False, rag_offline=False, rag_index="", rag_corpus="prompts"):
         self.llm = llm
         self.model_name = model_name.replace("/", "_")
         self.all_tests = all_tests
@@ -20,16 +22,29 @@ class DecisionTester:
         self.local_inference = local
         self.use_rag = use_rag
         self.quant = quant
-        if self.use_rag:
-            # Get Memories for the RAG
-            memories_dir = 'prompts/RAG_memory.txt'
-            print(f'Loading memories from {memories_dir}...')
-            memories_loader = TextLoader(file_path=memories_dir)
+        self.rag_offline = rag_offline
+        self.rag_index = rag_index
+        self.rag_corpus = rag_corpus
 
-            # Create a VectorstoreIndex from the collected loaders
-            self.splitter = CharacterTextSplitter(separator='#', keep_separator=False, chunk_overlap=20, chunk_size=100)
-            self.index = VectorstoreIndexCreator(embedding=OpenAIEmbeddings(api_key=OPENAI_API_TOKEN), text_splitter=self.splitter).from_loaders([memories_loader])
+        if self.use_rag:
             self.mem_nb = 5
+            
+            if self.rag_offline:
+                self._init_rag_offline()
+            else:
+                # Get Memories for the RAG
+                memories_dir = 'prompts/RAG_memory.txt'
+                print(f'Loading memories from {memories_dir}...')
+                memories_loader = TextLoader(file_path=memories_dir)
+
+                # Create a VectorstoreIndex from the collected loaders
+                self.splitter = CharacterTextSplitter(
+                    separator='#', keep_separator=False, chunk_overlap=20, chunk_size=100
+                )
+                self.index = VectorstoreIndexCreator(
+                    embedding=OpenAIEmbeddings(api_key=OPENAI_API_TOKEN),
+                    text_splitter=self.splitter
+                ).from_loaders([memories_loader])
 
         # Tokenizer online stats
         self.tokenizer = get_tokenizer(self.model_name)
@@ -62,6 +77,40 @@ class DecisionTester:
             {"human_prompt":"Drive on the racing line", "evaluation_function": self._drive_racing_line_check},
         ]
 
+    def _init_rag_offline(self):
+        """
+        Initializes an OfflineRetriever.
+        - If a prebuilt index prefix is provided via --rag_index and exists, load it.
+        - Else, build from the same source you already use: prompts/RAG_memory.txt (split by '#')
+        """
+        print("[RAG] Using OFFLINE embeddings")
+        index_prefix = self.rag_index
+        if index_prefix and os.path.exists(index_prefix + ".meta.pkl"):
+            print(f"[RAG] Loading offline index from {index_prefix}.*")
+            self.offline_retriever = OfflineRetriever(index_path=index_prefix, embeddings=LocalEmbeddings())
+            self.offline_retriever.load()
+            return
+
+        # Build on the fly from the same memory file you already use
+        memories_path = os.path.join(self.rag_corpus, "RAG_memory.txt")
+        if not os.path.exists(memories_path):
+            raise FileNotFoundError(
+                f"[RAG] Could not find {memories_path}. "
+                "Provide --rag_index pointing to a prebuilt index or ensure prompts/RAG_memory.txt exists."
+            )
+        print(f"[RAG] Building offline index from {memories_path}")
+        loader = TextLoader(file_path=memories_path)
+        docs = loader.load()
+        splitter = CharacterTextSplitter(separator='#', keep_separator=False, chunk_overlap=20, chunk_size=100)
+        chunks = splitter.split_documents(docs)
+        texts = [c.page_content for c in chunks if c and c.page_content]
+        ids = [f"mem_{i}" for i in range(len(texts))]
+
+        # Store in a session-scoped index path
+        os.makedirs("data/rag_index", exist_ok=True)
+        idx_prefix = os.path.join("data", "rag_index", "session_offline")
+        self.offline_retriever = OfflineRetriever(index_path=idx_prefix, embeddings=LocalEmbeddings())
+        self.offline_retriever.build(texts, ids)
 
     #################Checks#################
     def _stop_car_check(self, robot_states):
@@ -151,10 +200,23 @@ class DecisionTester:
         # Hints are empty if not using RAG
         hints = ''
         if self.use_rag:
-            rag_sources = self.index.vectorstore.search(query=human_prompt, search_type='similarity', k=self.mem_nb) if self.mem_nb > 0 else []
-            rag_sources = [{'meta': doc.metadata, 'content': doc.page_content} for doc in rag_sources]
-            for hint in rag_sources:
-                hints += hint['content'] + "\n"
+            if self.rag_offline:
+                # Offline retrieval
+                if self.mem_nb > 0:
+                    hits = self.offline_retriever.retrieve(human_prompt, k=self.mem_nb)
+                else:
+                    hits = []
+                for (_id, txt, _score) in hits:
+                    hints += (txt or "") + "\n"
+            else:
+                # Existing OpenAI / LangChain vectorstore path
+                rag_sources = (
+                    self.index.vectorstore.search(query=human_prompt, search_type='similarity', k=self.mem_nb)
+                    if self.mem_nb > 0 else []
+                )
+                rag_sources = [{'meta': doc.metadata, 'content': doc.page_content} for doc in rag_sources]
+                for hint in rag_sources:
+                    hints += hint['content'] + "\n"
 
         prompt = f"""
         You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
@@ -175,6 +237,30 @@ class DecisionTester:
         Explanation: <Brief Explanation> \n
         Adhering to Human: <True/False> \n
         """
+#         hints_block = f"HINTS\n{hints}" if hints else ""
+
+#         prompt = f"""Task: Decide if the car follows the human command.
+
+# Command: {human_prompt}
+# Frame: Frenet (m, m/s). Duration: {robot_state['time']} s. Samples: {robot_state['data_samples']}
+
+# DATA
+# s_pos={robot_state['s_pos']}
+# d_pos={robot_state['d_pos']}
+# s_speed={robot_state['s_speed']}
+# d_speed={robot_state['d_speed']}
+# d_left={robot_state['d_left']}
+# d_right={robot_state['d_right']}
+# reversing={robot_state['reversing']}
+# crashed={robot_state['crashed']}
+# facing_wall={robot_state['facing_wall']}
+
+# {hints_block}
+
+# Return exactly:
+# Explanation: <brief>
+# Adhering to Human: <True/False>"""
+
         return prompt, hints
 
     def sanitize_output(self, output):
@@ -353,6 +439,8 @@ if __name__ == '__main__':
     # Fetch local models from the models directory
     local_models = [os.path.join('models', f) for f in os.listdir(path='models')]
     parser = argparse.ArgumentParser(description='Test the reasoning pipeline on a single scenario.')
+    
+    # Model parameters
     parser.add_argument('--model', type=str, default='local', choices=[
         'gpt-4o',
         'unsloth/Qwen2.5-7B-Instruct',
@@ -360,7 +448,18 @@ if __name__ == '__main__':
         'unsloth/Llama-3.2-3B-Instruct',
         'nibauman/RobotxLLM_Qwen7B_SFT'
     ] + local_models, help='Choose the model to use.')
+    parser.add_argument('--quant', action='store_true', help='If you want to use Q5')
+    
+    # RAG arguments
     parser.add_argument('--rag', action='store_true', help='Whether to use RAG.')
+    parser.add_argument("--rag_offline", action="store_true",
+                        help="Use offline embeddings instead of OpenAI for RAG")
+    parser.add_argument("--rag_index", type=str, default="",
+                        help="Path prefix of offline index (e.g., data/rag_index/offline)")
+    parser.add_argument("--rag_corpus", type=str, default="prompts",
+                        help="Directory with .txt/.md/.jsonl to build an index if none is provided")
+    
+    # Dataset parameters
     parser.add_argument(
         '--dataset',
         type=str,
@@ -369,7 +468,6 @@ if __name__ == '__main__':
         help=f"Choose the dataset to use. Options are: all, {', '.join(possible_datasets)}"
     )
     parser.add_argument('--mini', action='store_true', help='Whether to run a mini test.')
-    parser.add_argument('--quant', action='store_true', help='If you want to use Q5')
 
     # Remote SSH Axelera board
     parser.add_argument("--ssh_interactive", action="store_true",
@@ -449,14 +547,36 @@ if __name__ == '__main__':
 
     # Evaluate the decision making on all datasets
     if args.dataset == 'all':
-        evaluator = DecisionTester(llm=llm, model_name=args.model, all_tests=True, mini=args.mini, local=local, use_rag=args.rag, quant=args.quant)
+        evaluator = DecisionTester(
+            llm=llm,
+            model_name=args.model,
+            all_tests=True,
+            mini=args.mini,
+            local=local,
+            use_rag=args.rag,
+            quant=args.quant,
+            rag_offline=args.rag_offline,
+            rag_index=args.rag_index,
+            rag_corpus=args.rag_corpus,
+        )
         for i, dataset in enumerate(possible_datasets):
             data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
             # Evaluate the decision making
             evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=dataset)
     # Only evaluate on a specific dataset
     else:
-        evaluator = DecisionTester(llm=llm, model_name=args.model, all_tests=False, mini=args.mini, local=local, use_rag=args.rag, quant=args.quant)
+        evaluator = DecisionTester(
+            llm=llm,
+            model_name=args.model,
+            all_tests=False,
+            mini=args.mini,
+            local=local,
+            use_rag=args.rag,
+            quant=args.quant,
+            rag_offline=args.rag_offline,
+            rag_index=args.rag_index,
+            rag_corpus=args.rag_corpus,
+        )
         data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
         # Evaluate the decision making
         evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
