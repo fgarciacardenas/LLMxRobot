@@ -514,12 +514,9 @@ if __name__ == '__main__':
             llm = RaceLLMGGGUF(model_dir=model_dir, gguf_name=gguf_name)
             print(f"Using model {gguf_name} from {model_dir}")
         else:
-            from inference.local_pipeline import LocalLLMPipeline
-            from inference.inf_pipeline import RaceLLMPipeline
-            from inference.remote_pipeline import RemoteLLMPipeline
-
             if getattr(args, "ax_local", False):
                 print("Using local interactive LLM pipeline (no SSH)")
+                from inference.local_pipeline import LocalLLMPipeline
                 llm = LocalLLMPipeline(
                     workdir=args.local_workdir,
                     venv_activate=args.local_venv,
@@ -528,6 +525,7 @@ if __name__ == '__main__':
                 )
             elif getattr(args, "ssh_interactive", False):
                 print("Using remote interactive SSH LLM pipeline")
+                from inference.remote_pipeline import RemoteLLMPipeline
                 llm = RemoteLLMPipeline(
                     ssh_user=args.ssh_user,
                     ssh_host=args.ssh_host,
@@ -540,8 +538,9 @@ if __name__ == '__main__':
                     ssh_verbose=args.ssh_verbose,
                     ssh_opts=args.ssh_opts
                 )
-                print("Generating LLM...")
             else:
+                print("Using GPU LLM pipeline")
+                from inference.inf_pipeline import RaceLLMPipeline
                 llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)
             print(f"Using model {args.model} from {model_dir}")
 
