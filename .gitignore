@@ -39,3 +39,6 @@ tests/mpc_tester/eval/*
 #train outputs
 train/outputs/*
 train/dataset/combined/*
+
+# Temporary files
+data/
