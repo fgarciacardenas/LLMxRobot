@@ -30,3 +30,4 @@ roslibpy==1.8.1
 
 #misc
 matplotlib==3.10.1
+pexpect
