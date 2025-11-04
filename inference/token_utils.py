@@ -6,18 +6,22 @@ from transformers import AutoTokenizer
 def _resolve_tokenizer_id(model_id: str) -> Optional[str]:
     mid = (model_id or "").lower()
     if "qwen" in mid:
+        print("Using Qwen tokenizer for token counting.")
         return "Qwen/Qwen2.5-7B-Instruct"
-    if "phi-3" in mid:
-        return "microsoft/Phi-3-mini-4k-instruct"
+    if "phi-3" in mid or "phi3" in mid:
+        print("Using Phi-3 tokenizer for token counting.")
+        return "unsloth/Phi-3-mini-4k-instruct"
     if "llama-3.2" in mid or "llama-3" in mid:
-        return "unsloth/Llama-3.2-3B-Instruct"  # tokenizer-compatible across 3.x
-    # If local folders in models/, pick a default that is close.
-    if mid.startswith("models/"):
+        print("Using Llama-3.2 tokenizer for token counting.")
         return "unsloth/Llama-3.2-3B-Instruct"
-    # For OpenAI (gpt-4o), we skip exact counting to avoid extra deps.
     if "gpt-4o" in mid:
+        print("GPT-4o tokenizer not available locally for token counting.")
         return None
+    if mid.startswith("models"):
+        print("Using Llama-3.2 tokenizer for token counting.")
+        return "unsloth/Llama-3.2-3B-Instruct"
     # Fallback
+    print("Using Llama-3.2 tokenizer for token counting.")
     return "unsloth/Llama-3.2-3B-Instruct"
 
 def get_tokenizer(model_id: str):

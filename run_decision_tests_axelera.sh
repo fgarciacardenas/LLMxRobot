@@ -20,7 +20,7 @@ BASE_CMD="python3 -m tests.decision_tester.decision_tester \
   --ax_local \
   --local_workdir ~/RISCVxLLMxRobot/third_party/voyager-sdk \
   --local_venv ~/RISCVxLLMxRobot/third_party/voyager-sdk/venv/bin/activate \
-  --local_run \"export OPENAI_API_KEY=$OPENAI_API_KEY && python3 ~/RISCVxLLMxRobot/third_party/voyager-sdk/inference_llm.py phi3-mini-1024-4core-static\""
+  --local_run \"export OPENAI_API_KEY=$OPENAI_API_KEY && python3 ~/RISCVxLLMxRobot/third_party/voyager-sdk/inference_llm.py phi3-mini-2048-4core-static\""
 
 # Test 1
 LOG1="$LOG_DIR/test_rag_$(date +'%Y%m%d_%H%M%S').txt"

@@ -500,6 +500,7 @@ if __name__ == '__main__':
     # define model
     llm = None
     local = False
+    model_name = args.model
     if args.model == 'gpt-4o':
         from langchain_openai import ChatOpenAI
         llm = ChatOpenAI(model_name='gpt-4o', openai_api_key=OPENAI_API_TOKEN)
@@ -516,6 +517,13 @@ if __name__ == '__main__':
         else:
             if getattr(args, "ax_local", False):
                 print("Using local interactive LLM pipeline (no SSH)")
+                if "llama-3.2" in args.local_run or "llama-3" in args.local_run:
+                    model_name = "local_llama-3"
+                elif "phi-3" in args.local_run or "phi3" in args.local_run:
+                    model_name = "local_phi-3"
+                else:
+                    model_name = "local_unknown"
+                
                 from inference.local_pipeline import LocalLLMPipeline
                 llm = LocalLLMPipeline(
                     workdir=args.local_workdir,
@@ -541,14 +549,14 @@ if __name__ == '__main__':
             else:
                 print("Using GPU LLM pipeline")
                 from inference.inf_pipeline import RaceLLMPipeline
-                llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template)
+                llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template) # , max_seq_length=2048, max_new_tokes=2048
             print(f"Using model {args.model} from {model_dir}")
 
     # Evaluate the decision making on all datasets
     if args.dataset == 'all':
         evaluator = DecisionTester(
             llm=llm,
-            model_name=args.model,
+            model_name=model_name,
             all_tests=True,
             mini=args.mini,
             local=local,

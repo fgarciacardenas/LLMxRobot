@@ -1,6 +1,6 @@
-from transformers import Pipeline, BitsAndBytesConfig
 from unsloth import FastLanguageModel
 from unsloth.chat_templates import get_chat_template
+from transformers import Pipeline, BitsAndBytesConfig
 import os, time
 import numpy as np
 import torch
@@ -48,18 +48,17 @@ class RaceLLMPipeline(Pipeline):
         elif chat_template == "qwen-2.5":
             tokenizer = get_chat_template(
                 tokenizer,
-                chat_template="qwen-2.5",
+                chat_template=chat_template,
                 mapping={"role": "role", "content": "content", "user": "user", "assistant": "assistant"},
             )
         elif chat_template == "llama-3.2":
             tokenizer = get_chat_template(
                 tokenizer,
-                chat_template="llama-3.1",  # <-- Unsloth uses the Llama-3.x template bucket
-                # Llama 3.x uses the standard role/content schema, so default mapping works.
+                chat_template=chat_template,
                 mapping={"role": "role", "content": "content", "user": "user", "assistant": "assistant"},
             )
         else:
-            raise ValueError(f"Chat template {chat_template} not recognized. Please use 'phi-3' or 'qwen-2.5'.")
+            raise ValueError(f"Chat template {chat_template} not recognized. Please use 'phi-3', 'qwen-2.5' or llama-3.2.")
         
         # Add pad token if it does not exist
         if tokenizer.pad_token is None:
