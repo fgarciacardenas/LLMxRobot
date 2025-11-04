@@ -1,8 +1,14 @@
 #!/bin/bash
 set -e  # Exit immediately if a command exits with a non-zero status
 
-# Configure OpenAI API key
-export OPENAI_API_KEY=<key>
+# Load environment variables from .env if it exists
+if [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+else
+  echo "⚠️ .env file not found. Make sure OPENAI_API_KEY is set in the environment."
+fi
 
 # Define a base directory for logs
 LOG_DIR=./logs
