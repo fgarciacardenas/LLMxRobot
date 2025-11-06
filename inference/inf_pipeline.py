@@ -113,15 +113,28 @@ class RaceLLMPipeline(Pipeline):
             # Filter out the chat template, we want what is between <|assistant|> and <|end|>
             model_outputs = [output.split("<|assistant|>")[1].split("<|end|>")[0].strip() for output in model_outputs]
             return model_outputs[0], None, None
-        elif self.chat_template in ("qwen-2.5", "llama-3.2"):
+        elif self.chat_template == "qwen-2.5":
             # Filter out the chat template for Qwen-2.5, extract content between <|im_start|>assistant and <|im_end|>
             model_outputs = [
-                output.split("<|im_start|>assistant")[1].split("<|im_end|>")[0].strip() 
+                output.split("<|im_start|>assistant")[1].split("<|im_end|>")[0].strip()
                 if "<|im_start|>assistant" in output and "<|im_end|>" in output
                 else output  # Fallback to raw output if markers are missing
                 for output in model_outputs
             ]
             return model_outputs[0], None, None
+        elif self.chat_template == "llama-3.2":
+            start_tag = "<|start_header_id|>assistant<|end_header_id|>"
+            end_tag = "<|eot_id|>"
+            cleaned_outputs = []
+            for output in model_outputs:
+                if start_tag in output:
+                    assistant_section = output.split(start_tag, 1)[1]
+                    if end_tag in assistant_section:
+                        assistant_section = assistant_section.split(end_tag, 1)[0]
+                    cleaned_outputs.append(assistant_section.strip())
+                else:
+                    cleaned_outputs.append(output)
+            return cleaned_outputs[0], None, None
         else:
             raise ValueError(f"Chat template {self.chat_template} not recognized.")
 
