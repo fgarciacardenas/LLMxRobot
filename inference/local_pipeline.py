@@ -32,7 +32,7 @@ class LocalLLMPipeline:
         venv_activate: str = "venv/bin/activate",
         run_cmd: str = "./inference_llm.py llama-3-2-3b-1024-4core-static",
         login_timeout: int = 30,      # time to bring up bash + venv + program
-        prompt_timeout: int = 180,    # time to wait for first 'User:' and for each turn
+        prompt_timeout: int = 360,    # time to wait for first 'User:' and for each turn
         strip_ansi: bool = True,
         verbose: bool = False,
     ):
