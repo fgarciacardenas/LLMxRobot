@@ -199,6 +199,7 @@ class DecisionTester:
     def build_prompt(self, human_prompt, robot_state):
         # Hints are empty if not using RAG
         hints = ''
+        rag_details = []
         if self.use_rag:
             if self.rag_offline:
                 # Offline retrieval
@@ -207,6 +208,11 @@ class DecisionTester:
                 else:
                     hits = []
                 for (_id, txt, _score) in hits:
+                    rag_details.append({
+                        "id": _id,
+                        "score": _score,
+                        "text": txt,
+                    })
                     hints += (txt or "") + "\n"
             else:
                 # Existing OpenAI / LangChain vectorstore path
@@ -214,9 +220,16 @@ class DecisionTester:
                     self.index.vectorstore.search(query=human_prompt, search_type='similarity', k=self.mem_nb)
                     if self.mem_nb > 0 else []
                 )
-                rag_sources = [{'meta': doc.metadata, 'content': doc.page_content} for doc in rag_sources]
-                for hint in rag_sources:
-                    hints += hint['content'] + "\n"
+                processed_sources = []
+                for doc in rag_sources:
+                    meta = getattr(doc, "metadata", {}) or {}
+                    content = getattr(doc, "page_content", "")
+                    processed_sources.append({
+                        "metadata": meta,
+                        "content": content,
+                    })
+                    hints += (content or "") + "\n"
+                rag_details = processed_sources
 
         prompt = f"""
         You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
@@ -261,7 +274,7 @@ class DecisionTester:
 # Explanation: <brief>
 # Adhering to Human: <True/False>"""
 
-        return prompt, hints
+        return prompt, hints, rag_details
 
     def sanitize_output(self, output):
         if output is None:
@@ -302,6 +315,7 @@ class DecisionTester:
         correct_answer = 0
         incorrect_entries = []
         case_accuracies = []
+        sample_debug_entries = []
         for test in self.TEST_CASES:
             correct_case_answer = 0
             print(f"Testing: {test['human_prompt']}")
@@ -313,7 +327,7 @@ class DecisionTester:
             otoks_case = RunningStats()
 
             for i, data in enumerate(tqdm.tqdm(data_set)):
-                prompt, rag_text = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
+                prompt, rag_text, rag_details = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
 
                 # Token accounting (prompt & RAG)
                 ptoks = count_tokens(prompt, self.tokenizer) if self.tokenizer else 0
@@ -327,6 +341,7 @@ class DecisionTester:
                 if self.local_inference:
                     llm_response, _, _ = self.llm(prompt)
                 else:
+                    # prompt = " ".join(prompt.split())
                     llm_response = self.llm.invoke(prompt).content
 
                 # Token accounting (output)
@@ -336,6 +351,23 @@ class DecisionTester:
 
                 # Evaluate
                 llm_output = self.sanitize_output(llm_response)
+
+                rag_mode = "offline" if (self.use_rag and self.rag_offline) else ("online" if self.use_rag else "disabled")
+                sample_debug_entries.append({
+                    "test_case": test['human_prompt'],
+                    "sample_index": i,
+                    "rag_mode": rag_mode,
+                    "rag_k": self.mem_nb if self.use_rag else 0,
+                    "rag_details": rag_details,
+                    "rag_text": rag_text,
+                    "prompt": prompt,
+                    "model_response_raw": llm_response,
+                    "sanitized_output": llm_output,
+                    "expected_output": labels[i],
+                    "prompt_tokens": ptoks,
+                    "rag_tokens": rtoks,
+                    "output_tokens": otoks,
+                })
 
                 if llm_output is None:
                     # treat as incorrect; optionally log the raw response for debugging
@@ -400,6 +432,17 @@ class DecisionTester:
                 f.write(f"Expected Output: {entry['expected_output']}\n")
                 f.write("-" * 50 + "\n")
         print(f"Logged to {log_file}")
+
+        debug_log_file = (
+            log_file.replace(".txt", "_samples.jsonl")
+            if log_file.endswith(".txt")
+            else f"{log_file}_samples.jsonl"
+        )
+        with open(debug_log_file, 'w') as f:
+            for entry in sample_debug_entries:
+                f.write(json.dumps(entry))
+                f.write("\n")
+        print(f"Sample-level debug logged to {debug_log_file}")
 
         # Overall token stats (mean/std/min/max)
         P_mean, P_std, P_min, P_max = self.prompt_stats_overall.as_tuple()
