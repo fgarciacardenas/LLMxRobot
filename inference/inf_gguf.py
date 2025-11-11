@@ -2,15 +2,14 @@ from llama_cpp import Llama
 import os
 
 class RaceLLMGGGUF:
-    def __init__(self, model_dir, gguf_name, max_tokens=256):
+    def __init__(self, model_dir, gguf_name, chat_format="llama-3", max_tokens=512, n_ctx=4096, n_gpu_layers=-1):
         self.max_tokens = max_tokens
         self.path = os.path.join(model_dir, gguf_name)
         self.llm = Llama(
             model_path=self.path,
-            chat_format="llama-2",
-            n_gpu_layers=1000,
-            n_ctx=2048,
-            n_batch=2048,
+            chat_format=chat_format,
+            n_gpu_layers=n_gpu_layers,
+            n_ctx=n_ctx,
             seed=42,
             verbose=False
             )
