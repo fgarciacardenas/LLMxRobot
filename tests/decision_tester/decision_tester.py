@@ -13,8 +13,22 @@ from inference.rag_offline import OfflineRetriever, LocalEmbeddings
 ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
 class DecisionTester:
-    def __init__(self, llm, model_name, all_tests=False, mini=False, local=True, use_rag=False, 
-                 quant=False, rag_offline=False, rag_index="", rag_corpus="prompts"):
+    def __init__(
+        self,
+        llm,
+        model_name,
+        all_tests=False,
+        mini=False,
+        local=True,
+        use_rag=False,
+        quant=False,
+        rag_offline=False,
+        rag_index="",
+        rag_corpus="prompts",
+        rag_max_hits=5,
+        rag_score_threshold=0.0,
+        rag_fetch_k=5,
+    ):
         self.llm = llm
         self.model_name = model_name.replace("/", "_")
         self.all_tests = all_tests
@@ -25,9 +39,12 @@ class DecisionTester:
         self.rag_offline = rag_offline
         self.rag_index = rag_index
         self.rag_corpus = rag_corpus
+        self.rag_max_hits = rag_max_hits
+        self.rag_score_threshold = rag_score_threshold
+        self.rag_fetch_k = rag_fetch_k if rag_fetch_k is not None else 5
 
         if self.use_rag:
-            self.mem_nb = 5
+            self.mem_nb = self.rag_fetch_k if self.rag_fetch_k is not None else 5
             
             if self.rag_offline:
                 self._init_rag_offline()
@@ -196,40 +213,87 @@ class DecisionTester:
             data = json.load(f)
         return data
 
+    def _gather_rag_candidates(self, human_prompt):
+        """
+        Retrieve raw RAG candidates (with scores when available) without filtering.
+        """
+        if not self.use_rag:
+            return []
+
+        fetch_k = self.rag_fetch_k if self.rag_fetch_k is not None else 0
+        if fetch_k <= 0:
+            return []
+
+        candidates = []
+        if self.rag_offline:
+            hits = self.offline_retriever.retrieve(human_prompt, k=fetch_k)
+            for (_id, txt, score) in hits:
+                candidates.append({
+                    "id": _id,
+                    "source": "offline",
+                    "text": txt or "",
+                    "score": float(score) if score is not None else None,
+                })
+        else:
+            vectorstore = getattr(self.index, "vectorstore", None)
+            docs_with_scores = []
+            if vectorstore is not None and hasattr(vectorstore, "similarity_search_with_score"):
+                docs_with_scores = vectorstore.similarity_search_with_score(human_prompt, k=fetch_k)
+            else:
+                docs = []
+                if vectorstore is not None:
+                    if hasattr(vectorstore, "search"):
+                        docs = vectorstore.search(query=human_prompt, search_type='similarity', k=fetch_k)
+                    elif hasattr(vectorstore, "similarity_search"):
+                        docs = vectorstore.similarity_search(human_prompt, k=fetch_k)
+                docs_with_scores = [(doc, None) for doc in (docs or [])]
+
+            for doc_score in docs_with_scores:
+                if isinstance(doc_score, tuple) and len(doc_score) == 2:
+                    doc, score = doc_score
+                else:
+                    doc, score = doc_score, None
+                meta = getattr(doc, "metadata", {}) or {}
+                content = getattr(doc, "page_content", "") or ""
+                candidates.append({
+                    "metadata": meta,
+                    "source": meta.get("source"),
+                    "text": content,
+                    "score": float(score) if score is not None else None,
+                })
+        return candidates
+
+    def _filter_rag_candidates(self, candidates):
+        """
+        Apply similarity thresholding and max hint limits to raw candidates.
+        """
+        if not candidates:
+            return []
+
+        filtered = []
+        threshold = self.rag_score_threshold if self.rag_score_threshold is not None else None
+        for hit in candidates:
+            score = hit.get("score")
+            if threshold is not None and score is not None and score < threshold:
+                continue
+            filtered.append(hit)
+
+        if self.rag_max_hits and self.rag_max_hits > 0:
+            filtered = filtered[:self.rag_max_hits]
+
+        return filtered
+
     def build_prompt(self, human_prompt, robot_state):
         # Hints are empty if not using RAG
         hints = ''
         rag_details = []
+        rag_candidates = []
         if self.use_rag:
-            if self.rag_offline:
-                # Offline retrieval
-                if self.mem_nb > 0:
-                    hits = self.offline_retriever.retrieve(human_prompt, k=self.mem_nb)
-                else:
-                    hits = []
-                for (_id, txt, _score) in hits:
-                    rag_details.append({
-                        "id": _id,
-                        "score": _score,
-                        "text": txt,
-                    })
-                    hints += (txt or "") + "\n"
-            else:
-                # Existing OpenAI / LangChain vectorstore path
-                rag_sources = (
-                    self.index.vectorstore.search(query=human_prompt, search_type='similarity', k=self.mem_nb)
-                    if self.mem_nb > 0 else []
-                )
-                processed_sources = []
-                for doc in rag_sources:
-                    meta = getattr(doc, "metadata", {}) or {}
-                    content = getattr(doc, "page_content", "")
-                    processed_sources.append({
-                        "metadata": meta,
-                        "content": content,
-                    })
-                    hints += (content or "") + "\n"
-                rag_details = processed_sources
+            rag_candidates = self._gather_rag_candidates(human_prompt)
+            rag_details = self._filter_rag_candidates(rag_candidates)
+            hint_texts = [hit.get("text") for hit in rag_details if hit.get("text")]
+            if hint_texts:
+                hints = "\n".join(hint_texts) + "\n"
 
         prompt = f"""
         You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
@@ -274,7 +338,7 @@ class DecisionTester:
 # Explanation: <brief>
 # Adhering to Human: <True/False>"""
 
-        return prompt, hints, rag_details
+        return prompt, hints, rag_details, rag_candidates
 
     def sanitize_output(self, output):
         if output is None:
@@ -327,7 +391,12 @@ class DecisionTester:
             otoks_case = RunningStats()
 
             for i, data in enumerate(tqdm.tqdm(data_set)):
-                prompt, rag_text, rag_details = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
+                (
+                    prompt,
+                    rag_text,
+                    rag_details,
+                    rag_candidates,
+                ) = self.build_prompt(human_prompt=test['human_prompt'], robot_state=data)
 
                 # Token accounting (prompt & RAG)
                 ptoks = count_tokens(prompt, self.tokenizer) if self.tokenizer else 0
@@ -358,7 +427,12 @@ class DecisionTester:
                     "sample_index": i,
                     "rag_mode": rag_mode,
                     "rag_k": self.mem_nb if self.use_rag else 0,
+                    "rag_threshold": self.rag_score_threshold if self.use_rag else None,
+                    "rag_max_hits": self.rag_max_hits if self.use_rag else None,
+                    "rag_candidate_count": len(rag_candidates),
+                    "rag_used_count": len(rag_details),
                     "rag_details": rag_details,
+                    "rag_candidates": rag_candidates,
                     "rag_text": rag_text,
                     "prompt": prompt,
                     "model_response_raw": llm_response,
@@ -434,9 +508,9 @@ class DecisionTester:
         print(f"Logged to {log_file}")
 
         debug_log_file = (
-            log_file.replace(".txt", "_samples.jsonl")
+            log_file.replace(".txt", "_samples.json")
             if log_file.endswith(".txt")
-            else f"{log_file}_samples.jsonl"
+            else f"{log_file}_samples.json"
         )
         with open(debug_log_file, 'w') as f:
             for entry in sample_debug_entries:
@@ -487,7 +561,9 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='local', choices=[
         'gpt-4o',
         'unsloth/Qwen2.5-7B-Instruct',
+        'microsoft/Phi-3-mini-4k-instruct',
         'unsloth/Phi-3-mini-4k-instruct',
+        'meta-llama/Llama-3.2-3B-Instruct',
         'unsloth/Llama-3.2-3B-Instruct',
         'nibauman/RobotxLLM_Qwen7B_SFT'
     ] + local_models, help='Choose the model to use.')
@@ -500,7 +576,13 @@ if __name__ == '__main__':
     parser.add_argument("--rag_index", type=str, default="",
                         help="Path prefix of offline index (e.g., data/rag_index/offline)")
     parser.add_argument("--rag_corpus", type=str, default="prompts",
-                        help="Directory with .txt/.md/.jsonl to build an index if none is provided")
+                        help="Directory with .txt/.md/.json to build an index if none is provided")
+    parser.add_argument("--rag_max_hits", type=int, default=5,
+                        help="Maximum number of hints to include after filtering (<=0 keeps all).")
+    parser.add_argument("--rag_threshold", type=float, default=0.0,
+                        help="Minimum similarity score required to include a hint.")
+    parser.add_argument("--rag_fetch_k", type=int, default=5,
+                        help="Number of candidates to retrieve before filtering.")
     
     # Dataset parameters
     parser.add_argument(
@@ -608,6 +690,9 @@ if __name__ == '__main__':
             rag_offline=args.rag_offline,
             rag_index=args.rag_index,
             rag_corpus=args.rag_corpus,
+            rag_max_hits=args.rag_max_hits,
+            rag_score_threshold=args.rag_threshold,
+            rag_fetch_k=args.rag_fetch_k,
         )
         for i, dataset in enumerate(possible_datasets):
             data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
@@ -626,6 +711,9 @@ if __name__ == '__main__':
             rag_offline=args.rag_offline,
             rag_index=args.rag_index,
             rag_corpus=args.rag_corpus,
+            rag_max_hits=args.rag_max_hits,
+            rag_score_threshold=args.rag_threshold,
+            rag_fetch_k=args.rag_fetch_k,
         )
         data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
         # Evaluate the decision making
