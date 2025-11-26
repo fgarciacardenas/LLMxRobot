@@ -1,17 +1,34 @@
 from unsloth import FastLanguageModel
 from unsloth.chat_templates import get_chat_template
-from transformers import Pipeline, BitsAndBytesConfig
-import os, time
+from transformers import Pipeline, BitsAndBytesConfig, StoppingCriteria, StoppingCriteriaList
+import os, re, time
 import numpy as np
 import torch
 
 CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5", "llama-3.2"]
+ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
+
+class StopAfterAdhering(StoppingCriteria):
+    """Stop generation once we see 'Adhering to Human: True/False' in generated text (excludes prompt)."""
+    def __init__(self, tokenizer, prompt_len: int):
+        super().__init__()
+        self.tokenizer = tokenizer
+        self.prompt_len = prompt_len
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
+        # Only inspect generated suffix, not the prompt
+        gen_ids = input_ids[0][self.prompt_len:]
+        if gen_ids.numel() == 0:
+            return False
+        text = self.tokenizer.decode(gen_ids, skip_special_tokens=False)
+        return ADHERING_RE.search(text) is not None
 
 class RaceLLMPipeline(Pipeline):
-    def __init__(self, chat_template, model_dir=None, max_seq_length=2048, max_new_tokes=512, dtype=torch.float16, load_in_4bit=False, model=None, tokenizer=None):
+    def __init__(self, chat_template, model_dir=None, max_seq_length=2048, max_new_tokes=512, dtype=torch.float16, load_in_4bit=False, model=None, tokenizer=None, binary_output=False):
         os.environ["TOKENIZERS_PARALLELISM"] = "false" # Avoids a warning
         self.chat_template = chat_template
         self.max_new_tokes = max_new_tokes
+        self.binary_output = binary_output
 
         # Load model and tokenizer via dir if not passed directly
         if model is None or tokenizer is None:
@@ -93,18 +110,23 @@ class RaceLLMPipeline(Pipeline):
         return inputs
 
     def _forward(self, model_inputs, **forward_params):
+        stopper = None
+        if self.binary_output:
+            prompt_len = model_inputs["input_ids"].shape[1]
+            stopper = StoppingCriteriaList([StopAfterAdhering(self.tokenizer, prompt_len=prompt_len)])
         outputs = self.model.generate(
             input_ids=model_inputs["input_ids"], 
             attention_mask=model_inputs["attention_mask"],  # Explicit attention mask
             max_new_tokens=self.max_new_tokes, 
             use_cache=True,
-            temperature=1.0,
+            temperature=0.0,
             do_sample=False, # Greedy decoding
             top_k=20, # 20 Qwen recommended
             top_p=0.8, # 0.8 Qwen recommended
             repetition_penalty=1.0, # 1.0 = no penalty
             encoder_repetition_penalty=1.0, # 1.0 = no penalty
             length_penalty=-1.0, # < 0.0 encourages shorter sentences
+            stopping_criteria=stopper,
         )
         return self.tokenizer.batch_decode(outputs)
 

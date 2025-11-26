@@ -10,7 +10,8 @@ from langchain_openai import OpenAIEmbeddings
 from inference.token_utils import get_tokenizer, count_tokens, RunningStats
 from inference.rag_offline import OfflineRetriever, LocalEmbeddings
 
-ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
+ADHERING_RE = re.compile(r"^\s*adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
+ADHERING_ANY_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
 class DecisionTester:
     def __init__(
@@ -28,6 +29,7 @@ class DecisionTester:
         rag_max_hits=5,
         rag_score_threshold=0.0,
         rag_fetch_k=5,
+        binary_output=False,
     ):
         self.llm = llm
         self.model_name = model_name.replace("/", "_")
@@ -42,6 +44,7 @@ class DecisionTester:
         self.rag_max_hits = rag_max_hits
         self.rag_score_threshold = rag_score_threshold
         self.rag_fetch_k = rag_fetch_k if rag_fetch_k is not None else 5
+        self.binary_output = binary_output
 
         if self.use_rag:
             self.mem_nb = self.rag_fetch_k if self.rag_fetch_k is not None else 5
@@ -295,25 +298,45 @@ class DecisionTester:
             if hint_texts:
                 hints = "\n".join(hint_texts) + "\n"
 
-        prompt = f"""
-        You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
-        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
-        The racing line is a minimal curvature trajectory to optimize the lap time.
-        The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
-        - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
-        - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
-        - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
-        - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
-        - The distance to the left wall is: {robot_state["d_left"]}\n\n
-        - The distance to the right wall is: {robot_state["d_right"]}\n\n 
-        - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
-        - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
-        - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
-        Use these guides to reason: \n\n{hints}\n\n    
-        Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
-        Explanation: <Brief Explanation> \n
-        Adhering to Human: <True/False> \n
-        """
+        if self.binary_output:
+            prompt = f"""
+            You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
+            The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+            The racing line is a minimal curvature trajectory to optimize the lap time.
+            The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
+            - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
+            - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
+            - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
+            - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
+            - The distance to the left wall is: {robot_state["d_left"]}\n\n
+            - The distance to the right wall is: {robot_state["d_right"]}\n\n 
+            - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
+            - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
+            - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
+            Use these guides to reason: \n\n{hints}\n\n    
+            Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
+            Adhering to Human: <True/False> \n
+            """
+        else:
+            prompt = f"""
+            You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
+            The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+            The racing line is a minimal curvature trajectory to optimize the lap time.
+            The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
+            - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
+            - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
+            - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
+            - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
+            - The distance to the left wall is: {robot_state["d_left"]}\n\n
+            - The distance to the right wall is: {robot_state["d_right"]}\n\n 
+            - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
+            - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
+            - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
+            Use these guides to reason: \n\n{hints}\n\n    
+            Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
+            Explanation: <Brief Explanation> \n
+            Adhering to Human: <True/False> \n
+            """
 #         hints_block = f"HINTS\n{hints}" if hints else ""
 
 #         prompt = f"""Task: Decide if the car follows the human command.
@@ -346,17 +369,24 @@ class DecisionTester:
         text = str(output)
 
         # 1) Try to capture the explicit field "Adhering to Human: <True/False>"
-        m = ADHERING_RE.search(text)
-        if m:
-            return m.group(1).lower() == "true"
+        if self.binary_output:
+            m = ADHERING_RE.search(text)
+            if m:
+                return m.group(1).lower() == "true"
+            return None
+        else:
+            m = ADHERING_ANY_RE.search(text)
+            if m:
+                return m.group(1).lower() == "true"
 
-        # 2) Fallbacks: standalone true/false
-        if re.search(r"\btrue\b", text, re.IGNORECASE):
-            return True
-        if re.search(r"\bfalse\b", text, re.IGNORECASE):
-            return False
+        # Fallbacks for non-binary mode: standalone true/false anywhere
+        if not self.binary_output:
+            if re.search(r"\btrue\b", text, re.IGNORECASE):
+                return True
+            if re.search(r"\bfalse\b", text, re.IGNORECASE):
+                return False
 
-        # 3) Couldn't parse
+        # Couldn't parse in the expected format
         return None
 
     def eval_decision_making(self, data_dir, llm, data_name):
@@ -420,6 +450,7 @@ class DecisionTester:
 
                 # Evaluate
                 llm_output = self.sanitize_output(llm_response)
+                structure_followed = llm_output is not None
 
                 rag_mode = "offline" if (self.use_rag and self.rag_offline) else ("online" if self.use_rag else "disabled")
                 sample_debug_entries.append({
@@ -437,16 +468,27 @@ class DecisionTester:
                     "prompt": prompt,
                     "model_response_raw": llm_response,
                     "sanitized_output": llm_output,
+                    "structure_followed": structure_followed,
                     "expected_output": labels[i],
                     "prompt_tokens": ptoks,
                     "rag_tokens": rtoks,
                     "output_tokens": otoks,
+                    "model_name": self.model_name,
                 })
 
                 if llm_output is None:
-                    # treat as incorrect; optionally log the raw response for debugging
-                    print("WARN: could not parse adherence. Raw response:\n", llm_response[:500])
-                    pass
+                    # treat as incorrect; log structure issues
+                    print("WARN: Structure not followed. Raw response:\n", llm_response[:500])
+                    incorrect_entries.append({
+                        "test_case": test['human_prompt'],
+                        "sample_index": i,
+                        "prompt": prompt,
+                        "model_response": llm_response,
+                        "sanitized_output": None,
+                        "expected_output": labels[i],
+                        "note": "Structure not followed"
+                    })
+                    continue
 
                 # Evaluate the model's response
                 if llm_output == labels[i]:
@@ -583,6 +625,8 @@ if __name__ == '__main__':
                         help="Minimum similarity score required to include a hint.")
     parser.add_argument("--rag_fetch_k", type=int, default=5,
                         help="Number of candidates to retrieve before filtering.")
+    parser.add_argument("--binary_output", action="store_true",
+                        help="If set, request single-line binary adherence output and enable early stopping.")
     
     # Dataset parameters
     parser.add_argument(
@@ -637,7 +681,7 @@ if __name__ == '__main__':
             from inference.inf_gguf import RaceLLMGGGUF
             # Find gguf in model_dir
             gguf_name = [f for f in os.listdir(model_dir) if f.endswith('.gguf')][0]
-            llm = RaceLLMGGGUF(model_dir=model_dir, gguf_name=gguf_name)
+            llm = RaceLLMGGGUF(model_dir=model_dir, gguf_name=gguf_name, binary_output=args.binary_output)
             print(f"Using model {gguf_name} from {model_dir}")
         else:
             if getattr(args, "ax_local", False):
@@ -674,7 +718,7 @@ if __name__ == '__main__':
             else:
                 print("Using GPU LLM pipeline")
                 from inference.inf_pipeline import RaceLLMPipeline
-                llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template) # , max_seq_length=2048, max_new_tokes=2048
+                llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template, binary_output=args.binary_output) # , max_seq_length=2048, max_new_tokes=2048
             print(f"Using model {args.model} from {model_dir}")
 
     # Evaluate the decision making on all datasets
@@ -693,6 +737,7 @@ if __name__ == '__main__':
             rag_max_hits=args.rag_max_hits,
             rag_score_threshold=args.rag_threshold,
             rag_fetch_k=args.rag_fetch_k,
+            binary_output=args.binary_output,
         )
         for i, dataset in enumerate(possible_datasets):
             data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
@@ -714,6 +759,7 @@ if __name__ == '__main__':
             rag_max_hits=args.rag_max_hits,
             rag_score_threshold=args.rag_threshold,
             rag_fetch_k=args.rag_fetch_k,
+            binary_output=args.binary_output,
         )
         data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
         # Evaluate the decision making
