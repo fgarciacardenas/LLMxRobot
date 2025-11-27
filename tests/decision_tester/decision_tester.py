@@ -300,43 +300,43 @@ class DecisionTester:
 
         if self.binary_output:
             prompt = f"""
-            You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
-            The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
-            The racing line is a minimal curvature trajectory to optimize the lap time.
-            The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
-            - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
-            - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
-            - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
-            - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
-            - The distance to the left wall is: {robot_state["d_left"]}\n\n
-            - The distance to the right wall is: {robot_state["d_right"]}\n\n 
-            - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
-            - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
-            - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
-            Use these guides to reason: \n\n{hints}\n\n    
-            Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
-            Adhering to Human: <True/False> \n
-            """
+        You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
+        - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
+        - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
+        - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
+        - The distance to the left wall is: {robot_state["d_left"]}\n\n
+        - The distance to the right wall is: {robot_state["d_right"]}\n\n 
+        - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
+        - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
+        - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
+        Use these guides to reason: \n\n{hints}\n\n    
+        Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
+        Adhering to Human: <True/False> \n
+        """
         else:
             prompt = f"""
-            You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
-            The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
-            The racing line is a minimal curvature trajectory to optimize the lap time.
-            The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
-            - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
-            - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
-            - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
-            - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
-            - The distance to the left wall is: {robot_state["d_left"]}\n\n
-            - The distance to the right wall is: {robot_state["d_right"]}\n\n 
-            - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
-            - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
-            - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
-            Use these guides to reason: \n\n{hints}\n\n    
-            Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
-            Explanation: <Brief Explanation> \n
-            Adhering to Human: <True/False> \n
-            """
+        You are an AI embodied on an autonomous racing car. The human wants to: {human_prompt} \n
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for {robot_state["time"]} seconds in {robot_state["data_samples"]} samples.\n        
+        - The car's position along the racing line is given by the s-coordinate: {robot_state["s_pos"]}\n\n        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: {robot_state["d_pos"]}\n\n        
+        - The car's speed along the racing line is given by the s-speed: {robot_state["s_speed"]}\n\n        
+        - The car's speed perpendicular to the racing line is given by the d-speed: {robot_state["d_speed"]}\n\n        
+        - The distance to the left wall is: {robot_state["d_left"]}\n\n
+        - The distance to the right wall is: {robot_state["d_right"]}\n\n 
+        - Bool if the car is reversing: {robot_state["reversing"]}\n\n          
+        - Bool if the car has crashed: {robot_state["crashed"]}\n\n        
+        - Bool if the car is facing the wall: {robot_state["facing_wall"]}\n\n\n   
+        Use these guides to reason: \n\n{hints}\n\n    
+        Check if the car is adhering to what the human wants: {human_prompt}. Strictly reply in the following format: \n
+        Explanation: <Brief Explanation> \n
+        Adhering to Human: <True/False> \n
+        """
 #         hints_block = f"HINTS\n{hints}" if hints else ""
 
 #         prompt = f"""Task: Decide if the car follows the human command.
