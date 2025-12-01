@@ -35,8 +35,9 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 
-ACTION_TRUE_RE = re.compile(r"Action:\s*a\)", re.IGNORECASE)
-ACTION_FALSE_RE = re.compile(r"Action:\s*b\)", re.IGNORECASE)
+# Accept "Action: a)" or "Action: a" (same for b)
+ACTION_TRUE_RE = re.compile(r"Action:\s*a\)?\b", re.IGNORECASE)
+ACTION_FALSE_RE = re.compile(r"Action:\s*b\)?\b", re.IGNORECASE)
 
 
 def load_decision_json(path: Path) -> List[Dict[str, Any]]:
