@@ -23,6 +23,13 @@ from pathlib import Path
 from statistics import mean
 from typing import Dict, Iterable, List, Optional
 
+MODEL_PARAM_MAP = {
+    "llama3-2": "3.21 B",
+    "phi3": "3.80 B",
+    "qwen2-5-7b": "7.61 B",
+    "qwen2-5-3b": "3.09 B",
+}
+
 
 def infer_rag_label(entry: Dict) -> str:
     rag_mode = (entry.get("rag_mode") or "").lower()
@@ -126,6 +133,10 @@ def summarize_run(run_dir: Path) -> Optional[Dict]:
     first = entries[0]
     # Model label: first segment of parent folder, split by underscore (e.g., Llama3-2_axelera_default -> Llama3-2)
     model_name = run_dir.parent.name.split("_", 1)[0]
+    model_params = next(
+        (v for k, v in MODEL_PARAM_MAP.items() if model_name.lower().startswith(k)),
+        "--",
+    )
 
     return {
         "Model": model_name,
@@ -133,6 +144,7 @@ def summarize_run(run_dir: Path) -> Optional[Dict]:
         "Device": infer_device(model_name, run_dir),
         "Quantized": infer_quantized(model_name, run_dir),
         "Binary": infer_binary(run_dir),
+        "Model Params": model_params,
         "Accuracy micro parsed (%)": round(acc_micro_parsed * 100, 2),
         "Accuracy macro parsed (%)": round(acc_macro_parsed * 100, 2),
         "Accuracy micro all (%)": round(acc_micro_all * 100, 2),
@@ -158,6 +170,7 @@ def aggregate_rows(rows: List[Dict]) -> List[Dict]:
             "Device": key[2],
             "Quantized": key[3],
             "Binary": key[4],
+            "Model Params": items[0].get("Model Params", "--"),
             "Runs": len(items),
             "Accuracy micro parsed (%)": round(mean(i["Accuracy micro parsed (%)"] for i in items), 2),
             "Accuracy macro parsed (%)": round(mean(i["Accuracy macro parsed (%)"] for i in items), 2),

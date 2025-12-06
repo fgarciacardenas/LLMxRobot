@@ -2,8 +2,8 @@
 .env
 
 # logs: drop every logs folder except the decision tester report logs
-/logs/*.txt
-/logs//
+**/logs/**
+*.tex
 !tests/decision_tester/logs/report_logs.zip
 
 #images

@@ -92,9 +92,9 @@ python3 -m tests.decision_tester.decision_tester \
 Use `summarize_benchmarks.py` to aggregate decision tester logs and export CSV/LaTeX tables for the Benchmarks spreadsheet.
 
 ```bash
-# From repo root; default logs path is logs/report_logs
-python3 summarize_benchmarks.py \
-  --logs logs/report_logs \
+# From repo root; point to the decision tester logs
+python3 src/LLMxRobot/tests/decision_tester/summarize_benchmarks.py \
+  --logs src/LLMxRobot/tests/decision_tester/logs/report_logs \
   --csv-runs benchmarks_runs.csv \   # per-run metrics (optional)
   --csv-agg benchmarks_agg.csv \     # grouped averages (optional)
   --latex-out benchmarks_table.tex   # LaTeX sidewaystable (optional)
@@ -104,3 +104,4 @@ Notes:
 - `--latex-caption` and `--latex-label` customize the LaTeX caption/label.
 - Model label comes from the parent folder prefix (e.g., `Llama3-2_axelera_default` -> `Llama3-2`).
 - Quantization column renders `Q4.M` for GGUF, `INT8` for Axelera, otherwise `FP16` (or `Quantized` when flagged).
+- Model params are auto-filled for known prefixes: Llama3-2 (3.21 B), Phi3 (3.80 B), Qwen2-5-7B (7.61 B), Qwen2-5-3B (3.09 B); otherwise `--`.
