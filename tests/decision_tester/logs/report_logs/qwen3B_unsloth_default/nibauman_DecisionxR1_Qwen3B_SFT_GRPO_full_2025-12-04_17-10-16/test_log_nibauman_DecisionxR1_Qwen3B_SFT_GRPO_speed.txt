@@ -1,0 +1,3211 @@
+### Case Accuracies ###
+Model: nibauman_DecisionxR1_Qwen3B_SFT_GRPO
+Using RAG: False
+Using Qantization: False
+Case Don't move accuracy: 80.00%
+Case Reverse the car accuracy: 100.00%
+Case Drive forward accuracy: 100.00%
+Case Oscillate! accuracy: 24.00%
+Case Drive close to the left wall accuracy: 20.00%
+Case Drive on the centerline accuracy: 48.00%
+Case Drive faster than 3 m/s accuracy: 100.00%
+Case Drive on the racing line accuracy: 96.00%
+--------------------------------------------------
+Total Accuracy for data: tests/decision_tester/robot_states/speed.json: 71.00%
+--------------------------------------------------
+### Incorrect Test Cases Log ###
+Test Case: Don't move
+Sample Index: 0
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Don't move 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 8 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 11, 12, 13, 14, 15, 16, 17]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.15, 0.2, 0.1, 0.05, 0.0, 0.05, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4.5, 5.0, 5.5, 5.0, 4.5, 5.0, 5.5, 5.0]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.3, 0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.0, 1.1, 0.9, 1.0, 1.1, 1.0, 0.9, 1.0]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Don't move. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's s-speed is consistently between 4.5 m/s and 5.5 m/s, which indicates that the car is moving at a steady pace. The d-speed is also within a small range, suggesting that the car is not oscillating significantly around the racing line. The car's lateral deviation and distance to the walls are within safe limits, and there are no signs of reversing, crashing, or facing the wall. The human's command to "Don't move" is adhered to as the car is not actively changing its position or speed.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Don't move
+Sample Index: 5
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Don't move 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 12 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.1, 0.2, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 5.2, 5.7, 6, 5.8, 6.2, 5.5, 5.9, 6.1, 5.3, 5.6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.25, 0.3, 0.2, 0.25, 0.3, 0.2, 0.25, 0.3, 0.2, 0.25, 0.3]
+
+        
+        - The distance to the left wall is: [1, 1.2, 1.1, 1.3, 1.2, 1.4, 1.3, 1.5, 1.4, 1.3, 1.5, 1.4]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.3, 1.1, 1.2, 1, 1.1, 1.2, 1, 1.1]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Don't move. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's s-speed is consistently below 5.5 m/s, which is significantly lower than the typical speed of an autonomous racing car. The lateral deviation (d-coordinate) is minimal, and the car is not reversing or facing the wall. The human's command to "Don't move" is adhered to as the car is not actively driving or accelerating.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Don't move
+Sample Index: 13
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Don't move 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 10, 15, 20, 25, 30, 35, 40, 45]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 5.5, 6, 6.5, 5.5, 5, 4.5, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, -0.1, 0.2, -0.2, 0.3, -0.3, 0.2, -0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.7, 1.6, 1.8, 1.5, 1.7, 1.6, 1.8, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.5, 1.3, 1.4, 1.2, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Don't move. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's s-speed is consistently below 5.5 m/s, which is significantly lower than the typical speed of an autonomous racing car. The lateral deviation (d-coordinate) is minimal, and the d-speed is also minimal, indicating that the car is not deviating significantly from the racing line. The car is not reversing, and there are no indications of a crash or facing the wall. The human's command to "Don't move" is adhered to as the car is not actively driving or accelerating.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Don't move
+Sample Index: 22
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Don't move 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15, 16.5, 18]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.05, 0.1, -0.1, 0.05, 0, -0.05, 0.05, -0.1, 0.1, 0.05, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 6.5, 7, 6.5, 6, 5.5, 5, 5.5, 6, 6.5, 7]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.2, 0.15, 0.1, 0.2, 0.1, 0.15, 0.2, 0.1, 0.2, 0.15]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.6, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Don't move. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's s-speed is consistently below 5.5 m/s, which is significantly lower than the typical speed of an autonomous racing car. The lateral speed (d-speed) is also minimal, indicating that the car is not actively moving or deviating from the racing line. The car is not reversing, and there are no indications of a crash or facing the wall. The human's command to "Don't move" is being adhered to as the car is not actively driving or accelerating.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Don't move
+Sample Index: 23
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Don't move 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 5.8, 6.2, 5.7, 5.9, 6.1, 5.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.4, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.3, 1.4, 1.5, 1.3, 1.4, 1.5, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Don't move. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's s-speed is consistently below 5.5 m/s, which is significantly lower than the typical speed of an autonomous racing car. The lateral deviation (d-coordinate) is minimal, and the car's speed perpendicular to the racing line is also low, indicating that the car is not actively moving. The human wants the car to "don't move," which is being adhered to by the car's current state.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 1
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 5 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 21, 27, 34]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.1, 0.1, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 6, 6, 7, 7]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.4, 0.2, 0.3]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.6, 1.5, 1.6, 1.7, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also fluctuating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 2
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 11 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1, 0.0, -0.1, -0.2, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 6, 5, 6, 5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.0, -0.1, -0.2, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.0, 1.1, 1.0, 1.0, 0.9, 0.8, 0.9, 1.0, 1.1, 1.2, 1.1]
+
+
+        - The distance to the right wall is: [1.1, 1.0, 1.1, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 0.9, 1.0]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also oscillating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 3
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.05, 0.1, 0.05, 0, -0.05, 0, 0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0, -0.1, 0, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.5, 1.6, 1.7, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.6, 1.5, 1.4, 1.3, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed is also oscillating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 5
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 12 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.1, 0.2, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 5.2, 5.7, 6, 5.8, 6.2, 5.5, 5.9, 6.1, 5.3, 5.6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.25, 0.3, 0.2, 0.25, 0.3, 0.2, 0.25, 0.3, 0.2, 0.25, 0.3]
+
+        
+        - The distance to the left wall is: [1, 1.2, 1.1, 1.3, 1.2, 1.4, 1.3, 1.5, 1.4, 1.3, 1.5, 1.4]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.3, 1.1, 1.2, 1, 1.1, 1.2, 1, 1.1]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not consistently on the racing line. The d-speed values are also fluctuating, suggesting that the car is not maintaining a steady lateral position, which aligns with the human's desire to oscillate. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 8
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 20, 25, 30, 35, 40]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.0]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.4, 0.2, 0.3, 0.2, 0.4, 0.3]
+
+        
+        - The distance to the left wall is: [0.8, 1.0, 0.9, 1.1, 1.0, 1.2, 1.1]
+
+
+        - The distance to the right wall is: [1.2, 1.0, 1.1, 0.9, 1.0, 0.8, 0.9]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values also show a slight variation, suggesting that the car is not moving in a perfectly controlled manner. However, the car is not reversing, has not crashed, and is not facing the wall, which aligns with the human's desire to oscillate. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 9
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0.0, 0.6, 1.2, 1.8, 2.4, 3.0, 3.6, 4.2, 4.8, 5.4, 6.0, 6.6, 7.2]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.05, -0.1, 0.0, 0.05, -0.05, 0.1, 0.0, -0.05, 0.05, 0.1, -0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0.2, 0.15, 0.1, 0.05, 0.2, 0.15, 0.3]
+
+        
+        - The distance to the left wall is: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also fluctuating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 10
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 8 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 11, 17, 23, 29, 35, 41]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.15, 0.1, 0.05, 0, -0.05, -0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 6, 6, 6, 6, 6, 6, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.15, 0.1, 0.05, 0, -0.05, -0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.55, 1.5, 1.45, 1.4, 1.35, 1.3]
+
+
+        - The distance to the right wall is: [1.5, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed is also oscillating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 11
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 10 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3.1, 4.6, 6.2, 7.8, 9.3, 10.9, 12.4, 14.0]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0.2, -0.1, 0.05, -0.15, 0.1, 0.0, -0.05, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5.2, 5.3, 5.5, 5.6, 5.4, 5.7, 5.5, 5.6, 5.7, 5.4]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.15, 0.2, 0.1, 0.05, 0.1, 0.15, 0.1, 0.05, 0.1]
+
+        
+        - The distance to the left wall is: [1.2, 1.3, 1.2, 1.3, 1.3, 1.2, 1.3, 1.2, 1.3, 1.2]
+
+
+        - The distance to the right wall is: [1.3, 1.2, 1.3, 1.2, 1.2, 1.3, 1.2, 1.3, 1.2, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also fluctuating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 12
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1, 0.0, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 5, 6, 6, 5, 5, 6, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.0, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.5, 1.4, 1.5, 1.4, 1.5, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.4, 1.5, 1.6, 1.5, 1.6, 1.5, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is oscillating between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also oscillating, suggesting that the car is moving back and forth along the racing line, which aligns with the human's desire to oscillate. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 13
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 10, 15, 20, 25, 30, 35, 40, 45]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 5.5, 6, 6.5, 5.5, 5, 4.5, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, -0.1, 0.2, -0.2, 0.3, -0.3, 0.2, -0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.7, 1.6, 1.8, 1.5, 1.7, 1.6, 1.8, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.5, 1.3, 1.4, 1.2, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is oscillating between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also oscillating, suggesting that the car is not moving in a smooth, consistent manner. This oscillation in lateral deviation and speed aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 14
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 4 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 20, 25]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 6.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.1, 0.05, 0]
+
+        
+        - The distance to the left wall is: [0.8, 0.75, 0.7, 0.65]
+
+
+        - The distance to the right wall is: [0.9, 0.85, 0.8, 0.75]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently small and negative, indicating that the car is oscillating around the racing line. The d-speed is also consistently small, suggesting that the car is not moving significantly laterally. The human wants the car to oscillate, which is being achieved by the car's lateral movement.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 15
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3.1, 4.6, 6.2, 7.7, 9.3, 10.8, 12.4, 13.9, 15.5, 17.0, 18.6]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.0, -0.1, 0.0, 0.1, 0.0, -0.1, 0.0, 0.1, -0.1, 0.0, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.2, 5.1, 5.3, 5.2, 5.3, 5.1, 5.2, 5.3, 5.2, 5.3, 5.1, 5.2]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2]
+
+        
+        - The distance to the left wall is: [1, 1.2, 1.1, 1.2, 1.3, 1.1, 1.2, 1.3, 1.1, 1.2, 1.3, 1.1, 1.2]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.3, 1.2, 1.4, 1.3, 1.2, 1.4, 1.3, 1.2, 1.4, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values also show a pattern of increasing and decreasing, suggesting that the car is oscillating in its lateral position. The human wants the car to oscillate, which is consistent with the car's current lateral deviation and speed patterns.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 16
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, -0.1, 0.0, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 4]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.4, 0.2, 0.3, 0.4, 0.2]
+
+        
+        - The distance to the left wall is: [0.8, 0.9, 0.7, 0.8, 0.9, 0.7, 0.8]
+
+
+        - The distance to the right wall is: [0.7, 0.8, 0.6, 0.7, 0.8, 0.6, 0.7]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values also show a fluctuating pattern, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 17
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 12 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.2, 0.1, 0.0, -0.1, 0.1, 0.2, -0.2, 0.0, 0.1, -0.1, 0.0, 0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5.5, 5.6, 5.7, 5.6, 5.5, 5.4, 5.5, 5.6, 5.7, 5.6, 5.5, 5.4]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.2, 0.1, 0.0, 0.2, 0.3, 0.4, 0.1, 0.2, 0.0, 0.1, 0.3]
+
+        
+        - The distance to the left wall is: [1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+
+
+        - The distance to the right wall is: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values also show a pattern of increasing and decreasing, suggesting that the car is oscillating in its lateral position. The human wants the car to oscillate, which is consistent with the car's current lateral deviation and speed patterns.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 18
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 11 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1, 0, -0.1, 0, 0.2, -0.1, 0.1, 0, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 7, 5, 6, 7, 5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0, 0.1, 0.2, 0.1, 0.3, 0.2, 0.1, 0.3, 0.2, 0.1, 0.2]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.7, 1.6, 1.5, 1.4, 1.6, 1.5, 1.6]
+
+
+        - The distance to the right wall is: [1.5, 1.6, 1.4, 1.5, 1.3, 1.4, 1.5, 1.6, 1.4, 1.5, 1.4]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is oscillating between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also fluctuating, suggesting that the car is not moving in a smooth, consistent manner. However, the car is not reversing, has not crashed, and is not facing the wall, which aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 19
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.2, 5.1, 5.3, 5.4, 5.2, 5.1]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.4, 0.2, 0.3, 0.4, 0.3, 0.2]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.4, 1.5, 1.6, 1.4, 1.5]
+
+
+        - The distance to the right wall is: [1.4, 1.3, 1.5, 1.4, 1.3, 1.5, 1.4]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values also show a slight variation, suggesting that the car is not moving in a smooth, consistent manner. This oscillation in lateral deviation and speed aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 22
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15, 16.5, 18]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.05, 0.1, -0.1, 0.05, 0, -0.05, 0.05, -0.1, 0.1, 0.05, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 6.5, 7, 6.5, 6, 5.5, 5, 5.5, 6, 6.5, 7]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.2, 0.15, 0.1, 0.2, 0.1, 0.15, 0.2, 0.1, 0.2, 0.15]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.6, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is oscillating between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also fluctuating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 23
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 5.8, 6.2, 5.7, 5.9, 6.1, 5.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.4, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.3, 1.4, 1.5, 1.3, 1.4, 1.5, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is oscillating between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed values are also fluctuating, suggesting that the car is not moving in a smooth, consistent manner. This oscillation in lateral deviation and speed aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Oscillate!
+Sample Index: 24
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Oscillate! 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 11 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0, -0.05, -0.1, -0.05, 0, 0.05, 0.1, 0.05, 0]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 5.5, 5, 5.5, 6, 5.5, 5, 5.5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.05, 0, -0.05, -0.1, -0.05, 0, 0.05, 0.1, 0.05, 0]
+
+        
+        - The distance to the left wall is: [1, 1.1, 1.2, 1.1, 1, 1.1, 1.2, 1.1, 1, 1.1, 1.2]
+
+
+        - The distance to the right wall is: [1, 1.1, 1.2, 1.1, 1, 1.1, 1.2, 1.1, 1, 1.1, 1.2]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Oscillate!. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation (d-coordinate) oscillates between positive and negative values, indicating that the car is not maintaining a consistent position along the racing line. The d-speed is also oscillating, suggesting that the car is not moving in a smooth, consistent manner. This behavior aligns with the human's desire to oscillate.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 1
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 5 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 21, 27, 34]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.1, 0.1, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 6, 6, 7, 7]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.4, 0.2, 0.3]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.6, 1.5, 1.6, 1.7, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall than the right wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting that the car is adhering to the human's desire to drive close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 2
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 11 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1, 0.0, -0.1, -0.2, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 6, 5, 6, 5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.0, -0.1, -0.2, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.0, 1.1, 1.0, 1.0, 0.9, 0.8, 0.9, 1.0, 1.1, 1.2, 1.1]
+
+
+        - The distance to the right wall is: [1.1, 1.0, 1.1, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 0.9, 1.0]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is driving close to the left wall. The car is not reversing, crashed, or facing the wall, and the lateral deviation is within a safe range for driving close to the wall.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 3
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.05, 0.1, 0.05, 0, -0.05, 0, 0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0, -0.1, 0, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.5, 1.6, 1.7, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.6, 1.5, 1.4, 1.3, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is driving close to the left wall. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 4
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 3 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.8, 3.6]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.15, 0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [6, 6, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.3, 0.3]
+
+        
+        - The distance to the left wall is: [1.2, 1.1, 1.0]
+
+
+        - The distance to the right wall is: [1.0, 1.1, 1.2]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is moving closer to the left wall. The distance to the left wall is decreasing, suggesting the car is driving closer to the left wall. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 6
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 3 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 20]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [2, 2.1, 2.2]
+
+
+        - The distance to the right wall is: [1.9, 1.8, 1.7]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is moving closer to the left wall. The distance to the left wall is decreasing, suggesting the car is driving closer to the left wall. The car is not reversing, crashed, or facing the wall, and the human wants the car to drive close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 7
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 6 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.2, 2.5, 4.0, 5.5, 7.1]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.2, 0.25, 0.3, 0.15, 0.1, 0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4.5, 5.0, 5.5, 6.0, 6.5, 7.0]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.35, 0.4, 0.25, 0.2, 0.15]
+
+        
+        - The distance to the left wall is: [0.8, 0.85, 0.9, 0.95, 1.0, 1.05]
+
+
+        - The distance to the right wall is: [1.2, 1.15, 1.1, 1.05, 1.0, 0.95]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating it is closer to the left wall. The distance to the left wall is decreasing, suggesting the car is moving closer to the left wall. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 9
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0.0, 0.6, 1.2, 1.8, 2.4, 3.0, 3.6, 4.2, 4.8, 5.4, 6.0, 6.6, 7.2]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.05, -0.1, 0.0, 0.05, -0.05, 0.1, 0.0, -0.05, 0.05, 0.1, -0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0.2, 0.15, 0.1, 0.05, 0.2, 0.15, 0.3]
+
+        
+        - The distance to the left wall is: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall than the right wall. The d-speed is also consistently negative, suggesting that the car is moving towards the left wall. The distance to the left wall is 1.5 meters, which is the closest to the left wall, aligning with the human's desire to drive close to the left wall.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 10
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 8 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 11, 17, 23, 29, 35, 41]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.15, 0.1, 0.05, 0, -0.05, -0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 6, 6, 6, 6, 6, 6, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.15, 0.1, 0.05, 0, -0.05, -0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.55, 1.5, 1.45, 1.4, 1.35, 1.3]
+
+
+        - The distance to the right wall is: [1.5, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall. The distance to the left wall is decreasing, suggesting the car is moving closer to the left wall. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 11
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 10 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3.1, 4.6, 6.2, 7.8, 9.3, 10.9, 12.4, 14.0]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0.2, -0.1, 0.05, -0.15, 0.1, 0.0, -0.05, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5.2, 5.3, 5.5, 5.6, 5.4, 5.7, 5.5, 5.6, 5.7, 5.4]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.15, 0.2, 0.1, 0.05, 0.1, 0.15, 0.1, 0.05, 0.1]
+
+        
+        - The distance to the left wall is: [1.2, 1.3, 1.2, 1.3, 1.3, 1.2, 1.3, 1.2, 1.3, 1.2]
+
+
+        - The distance to the right wall is: [1.3, 1.2, 1.3, 1.2, 1.2, 1.3, 1.2, 1.3, 1.2, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall than the right wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting that the car is adhering to the human's desire to drive close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 12
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1, 0.0, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 5, 6, 6, 5, 5, 6, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.0, -0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.5, 1.4, 1.5, 1.4, 1.5, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.4, 1.5, 1.6, 1.5, 1.6, 1.5, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is moving closer to the left wall. The distance to the left wall is decreasing, suggesting the car is driving closer to the left wall. The car is not reversing, crashed, or facing the wall, and the human wants the car to drive close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 13
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 10, 15, 20, 25, 30, 35, 40, 45]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 5.5, 6, 6.5, 5.5, 5, 4.5, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, -0.1, 0.2, -0.2, 0.3, -0.3, 0.2, -0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.7, 1.6, 1.8, 1.5, 1.7, 1.6, 1.8, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.5, 1.3, 1.4, 1.2, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is driving close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 14
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 4 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 20, 25]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 6.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.1, 0.05, 0]
+
+        
+        - The distance to the left wall is: [0.8, 0.75, 0.7, 0.65]
+
+
+        - The distance to the right wall is: [0.9, 0.85, 0.8, 0.75]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating it is closer to the left wall. The distance to the left wall is decreasing, suggesting the car is moving closer to the left wall. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 15
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3.1, 4.6, 6.2, 7.7, 9.3, 10.8, 12.4, 13.9, 15.5, 17.0, 18.6]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.0, -0.1, 0.0, 0.1, 0.0, -0.1, 0.0, 0.1, -0.1, 0.0, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.2, 5.1, 5.3, 5.2, 5.3, 5.1, 5.2, 5.3, 5.2, 5.3, 5.1, 5.2]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2]
+
+        
+        - The distance to the left wall is: [1, 1.2, 1.1, 1.2, 1.3, 1.1, 1.2, 1.3, 1.1, 1.2, 1.3, 1.1, 1.2]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.3, 1.2, 1.4, 1.3, 1.2, 1.4, 1.3, 1.2, 1.4, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is driving close to the left wall. The car is not reversing, crashed, or facing the wall, and the lateral deviation is within a safe range for driving close to the wall.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 17
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 12 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.2, 0.1, 0.0, -0.1, 0.1, 0.2, -0.2, 0.0, 0.1, -0.1, 0.0, 0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5.5, 5.6, 5.7, 5.6, 5.5, 5.4, 5.5, 5.6, 5.7, 5.6, 5.5, 5.4]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.2, 0.1, 0.0, 0.2, 0.3, 0.4, 0.1, 0.2, 0.0, 0.1, 0.3]
+
+        
+        - The distance to the left wall is: [1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+
+
+        - The distance to the right wall is: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is closer to the left wall. The distance to the left wall is consistently 1.2 meters, which is close to the human's desire to drive close to the left wall. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 18
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 11 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.1, 0, -0.1, 0, 0.2, -0.1, 0.1, 0, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 7, 5, 6, 7, 5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0, 0.1, 0.2, 0.1, 0.3, 0.2, 0.1, 0.3, 0.2, 0.1, 0.2]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.7, 1.6, 1.5, 1.4, 1.6, 1.5, 1.6]
+
+
+        - The distance to the right wall is: [1.5, 1.6, 1.4, 1.5, 1.3, 1.4, 1.5, 1.6, 1.4, 1.5, 1.4]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is driving close to the left wall. The car is not reversing, crashed, or facing the wall, and the lateral deviation is within a reasonable range for adhering to the human's desire to drive close to the left wall.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 19
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.2, 5.1, 5.3, 5.4, 5.2, 5.1]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.4, 0.2, 0.3, 0.4, 0.3, 0.2]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.4, 1.5, 1.6, 1.4, 1.5]
+
+
+        - The distance to the right wall is: [1.4, 1.3, 1.5, 1.4, 1.3, 1.5, 1.4]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's distance to the left wall is consistently lower than the distance to the right wall, indicating that the car is closer to the left wall. The human wants the car to drive close to the left wall, which is being adhered to.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 20
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 15 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.05, -0.1, -0.05, 0, 0.05, 0.1, 0.05, -0.05, -0.1, -0.05, 0, 0.05, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.2, 0.1, 0, -0.1, -0.2, -0.1, 0, 0.1, 0.2, 0.1, 0, -0.1, -0.2]
+
+        
+        - The distance to the left wall is: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+
+        - The distance to the right wall is: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall than the right wall. The distance to the left wall is consistently 1 meter, which is close to the human's desire to drive close to the left wall. The car's speed is constant, and it is not reversing or crashed, suggesting it is adhering to the human's command.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 22
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15, 16.5, 18]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.05, 0.1, -0.1, 0.05, 0, -0.05, 0.05, -0.1, 0.1, 0.05, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 6.5, 7, 6.5, 6, 5.5, 5, 5.5, 6, 6.5, 7]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0.2, 0.15, 0.1, 0.2, 0.1, 0.15, 0.2, 0.1, 0.2, 0.15]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.6, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating that it is closer to the left wall than the right wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting that the car is adhering to the human's desire to drive close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 23
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 5.8, 6.2, 5.7, 5.9, 6.1, 5.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.4, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.3, 1.4, 1.5, 1.3, 1.4, 1.5, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently positive, indicating it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is driving close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive close to the left wall
+Sample Index: 24
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive close to the left wall 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 11 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0, -0.05, -0.1, -0.05, 0, 0.05, 0.1, 0.05, 0]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 5.5, 5, 5.5, 6, 5.5, 5, 5.5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.05, 0, -0.05, -0.1, -0.05, 0, 0.05, 0.1, 0.05, 0]
+
+        
+        - The distance to the left wall is: [1, 1.1, 1.2, 1.1, 1, 1.1, 1.2, 1.1, 1, 1.1, 1.2]
+
+
+        - The distance to the right wall is: [1, 1.1, 1.2, 1.1, 1, 1.1, 1.2, 1.1, 1, 1.1, 1.2]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive close to the left wall. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating it is closer to the left wall. The distance to the left wall is consistently lower than the distance to the right wall, suggesting the car is adhering to the human's desire to drive close to the left wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 1
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 5 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 21, 27, 34]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, -0.1, 0.1, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 6, 6, 7, 7]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.4, 0.2, 0.3]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.6, 1.5, 1.6, 1.7, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within a small range, indicating it is not significantly deviating from the centerline. The d-coordinate values are between -0.1 and 0.1, which is within the acceptable range for centerline driving. The car's speed perpendicular to the racing line is also within a reasonable range, suggesting it is not oscillating significantly. The distances to the walls are within a safe range, and the car is not reversing or facing the wall, indicating it is not in a position to crash. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 3
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.2, 2.4, 3.6, 4.8, 6.0, 7.2]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.05, 0.1, 0.05, 0, -0.05, 0, 0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.1, 0, -0.1, 0, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.5, 1.6, 1.7, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.6, 1.5, 1.4, 1.3, 1.4, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within a small range, indicating it is not significantly deviating from the centerline. The d-coordinate values are mostly close to zero, suggesting the car is maintaining a relatively straight path. The human wants the car to drive on the centerline, and the car's lateral deviation is within acceptable limits.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 5
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 12 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.1, 0.2, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 5.2, 5.7, 6, 5.8, 6.2, 5.5, 5.9, 6.1, 5.3, 5.6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.25, 0.3, 0.2, 0.25, 0.3, 0.2, 0.25, 0.3, 0.2, 0.25, 0.3]
+
+        
+        - The distance to the left wall is: [1, 1.2, 1.1, 1.3, 1.2, 1.4, 1.3, 1.5, 1.4, 1.3, 1.5, 1.4]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.3, 1.1, 1.2, 1, 1.1, 1.2, 1, 1.1]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within a small range, indicating it is not deviating significantly from the centerline. The d-speed values are also within a small range, suggesting the car is not oscillating significantly around the racing line. The distances to the walls are not too close, and the car is not reversing or facing the wall, which implies it is not in a position to crash. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 7
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 6 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.2, 2.5, 4.0, 5.5, 7.1]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.2, 0.25, 0.3, 0.15, 0.1, 0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4.5, 5.0, 5.5, 6.0, 6.5, 7.0]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.35, 0.4, 0.25, 0.2, 0.15]
+
+        
+        - The distance to the left wall is: [0.8, 0.85, 0.9, 0.95, 1.0, 1.05]
+
+
+        - The distance to the right wall is: [1.2, 1.15, 1.1, 1.05, 1.0, 0.95]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently below 0.5 meters, indicating it is not significantly off-center. The d-speed values are within a reasonable range, suggesting the car is not oscillating significantly around the racing line. The distances to the walls are not too close, and the car is not reversing or facing the wall. Therefore, the car is adhering to the human's desire to drive on the centerline.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 8
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 20, 25, 30, 35, 40]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.0]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.4, 0.2, 0.3, 0.2, 0.4, 0.3]
+
+        
+        - The distance to the left wall is: [0.8, 1.0, 0.9, 1.1, 1.0, 1.2, 1.1]
+
+
+        - The distance to the right wall is: [1.2, 1.0, 1.1, 0.9, 1.0, 0.8, 0.9]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.1 to 0.2 meters, which is within the acceptable range for centerline driving. The d-speed values are also within a reasonable range, indicating minimal lateral movement. The car is not reversing, has not crashed, and is not facing the wall. Therefore, the car is adhering to the human's desire to drive on the centerline.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 10
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 8 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 11, 17, 23, 29, 35, 41]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.15, 0.1, 0.05, 0, -0.05, -0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 6, 6, 6, 6, 6, 6, 6]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.15, 0.1, 0.05, 0, -0.05, -0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.55, 1.5, 1.45, 1.4, 1.35, 1.3]
+
+
+        - The distance to the right wall is: [1.5, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently small, indicating it is not deviating significantly from the centerline. The d-coordinate values are within a small range, suggesting the car is maintaining a stable position relative to the racing line. The distances to the walls are also within a safe range, indicating the car is not too close to the walls. Since the car is not reversing, crashed, or facing the wall, it is adhering to the human's desire to drive on the centerline.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 13
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 4 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [5, 10, 15, 20, 25, 30, 35, 40, 45]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 5.5, 6, 6.5, 5.5, 5, 4.5, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, -0.1, 0.2, -0.2, 0.3, -0.3, 0.2, -0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.7, 1.6, 1.8, 1.5, 1.7, 1.6, 1.8, 1.5]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.2, 1.5, 1.3, 1.4, 1.2, 1.5]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.1 to 0.2 meters, which is within the acceptable range for driving on the centerline. The d-speed values are also within a small range, indicating minimal lateral movement. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 14
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 4 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 15, 20, 25]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.05, 0, -0.05]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 6.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.1, 0.05, 0]
+
+        
+        - The distance to the left wall is: [0.8, 0.75, 0.7, 0.65]
+
+
+        - The distance to the right wall is: [0.9, 0.85, 0.8, 0.75]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently negative, indicating it is deviating to the left. The d-coordinate starts at 0.1 and decreases to -0.05, suggesting the car is moving closer to the centerline. However, the deviation is not zero, indicating the car is not on the centerline. The car's speed perpendicular to the racing line is zero, which suggests it is not oscillating around the centerline. 
+
+Adhering to Human: False
+Sanitized Output: False
+Expected Output: True
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 15
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 13 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3.1, 4.6, 6.2, 7.7, 9.3, 10.8, 12.4, 13.9, 15.5, 17.0, 18.6]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, 0.0, -0.1, 0.0, 0.1, 0.0, -0.1, 0.0, 0.1, -0.1, 0.0, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.2, 5.1, 5.3, 5.2, 5.3, 5.1, 5.2, 5.3, 5.2, 5.3, 5.1, 5.2]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2]
+
+        
+        - The distance to the left wall is: [1, 1.2, 1.1, 1.2, 1.3, 1.1, 1.2, 1.3, 1.1, 1.2, 1.3, 1.1, 1.2]
+
+
+        - The distance to the right wall is: [1.5, 1.3, 1.4, 1.3, 1.2, 1.4, 1.3, 1.2, 1.4, 1.3, 1.2, 1.4, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.01 to 0.1, indicating it is not significantly deviating from the centerline. The d-speed values are also within a small range, suggesting the car is not oscillating significantly around the racing line. The distances to the walls are not too close, and the car is not reversing or facing the wall, which further supports the car's adherence to the human's desire to drive on the centerline.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 16
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 3 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.2, -0.1, 0.0, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 4]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.4, 0.2, 0.3, 0.4, 0.2]
+
+        
+        - The distance to the left wall is: [0.8, 0.9, 0.7, 0.8, 0.9, 0.7, 0.8]
+
+
+        - The distance to the right wall is: [0.7, 0.8, 0.6, 0.7, 0.8, 0.6, 0.7]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.1 to 0.4 meters, which is not centered around 0. The car's lateral deviation is not zero, indicating that the car is not on the centerline. 
+
+Adhering to Human: False
+Sanitized Output: False
+Expected Output: True
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 19
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 2 seconds in 7 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 1.5, 3, 4.5, 6, 7.5, 9]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.2, 5.1, 5.3, 5.4, 5.2, 5.1]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.3, 0.4, 0.2, 0.3, 0.4, 0.3, 0.2]
+
+        
+        - The distance to the left wall is: [1.5, 1.6, 1.4, 1.5, 1.6, 1.4, 1.5]
+
+
+        - The distance to the right wall is: [1.4, 1.3, 1.5, 1.4, 1.3, 1.5, 1.4]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.1 to 0.2 meters, which is within the acceptable range for driving on the centerline. The d-speed values are also within a reasonable range, indicating minimal lateral movement. The car is not reversing, has not crashed, and is not facing the wall. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 21
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 12 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4, 5, 6, 5, 6, 5, 4, 5, 6, 5, 4, 5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.4, 0.3, 0.4, 0.3, 0.2, 0.3, 0.4, 0.3, 0.2, 0.3]
+
+        
+        - The distance to the left wall is: [1.2, 1.1, 1.3, 1.0, 1.2, 1.1, 1.3, 1.0, 1.2, 1.1, 1.3, 1.0]
+
+
+        - The distance to the right wall is: [1.0, 1.2, 1.0, 1.3, 1.0, 1.2, 1.0, 1.3, 1.0, 1.2, 1.0, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.1 to 0.2 meters, which is within the acceptable range for centerline driving. The car's speed perpendicular to the racing line is also within a consistent range, indicating it is not oscillating significantly. The distances to the walls are not too close, suggesting the car is not too close to the walls. The car is not reversing, crashed, or facing the wall, and it is not reversing, indicating it is moving in a controlled manner. 
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the centerline
+Sample Index: 23
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the centerline 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 5 seconds in 9 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [0, 5, 10, 15, 20, 25, 30, 35, 40]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0.2, -0.2, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [5, 5.5, 6, 5.8, 6.2, 5.7, 5.9, 6.1, 5.5]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.4, 1.6, 1.5, 1.4, 1.6]
+
+
+        - The distance to the right wall is: [1.4, 1.5, 1.3, 1.4, 1.5, 1.3, 1.4, 1.5, 1.3]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the centerline. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's lateral deviation from the racing line is consistently within the range of 0.1 to 0.2 meters, which is within the acceptable range for centerline driving. The d-speed values are also within a small range, indicating minimal lateral movement. The car's position and speed along the racing line are stable, and the distances to the walls are within safe limits, suggesting the car is not reversing or facing a wall. The car has not crashed, and the lateral deviation is not significant enough to indicate a deviation from the centerline.
+
+Adhering to Human: True
+Sanitized Output: True
+Expected Output: False
+--------------------------------------------------
+Test Case: Drive on the racing line
+Sample Index: 0
+Prompt: 
+        You are an AI embodied on an autonomous racing car. The human wants to: Drive on the racing line 
+
+        The car is currently on the track, data available is in the Frenet Corrdinate frame, units are in meters and meters per second. 
+        The racing line is a minimal curvature trajectory to optimize the lap time.
+        The data has been sampled for 1 seconds in 8 samples.
+        
+        - The car's position along the racing line is given by the s-coordinate: [10, 11, 12, 13, 14, 15, 16, 17]
+
+        
+        - The car's lateral deviation from the racing line is given by the d-coordinate: [0.1, 0.15, 0.2, 0.1, 0.05, 0.0, 0.05, 0.1]
+
+        
+        - The car's speed along the racing line is given by the s-speed: [4.5, 5.0, 5.5, 5.0, 4.5, 5.0, 5.5, 5.0]
+
+        
+        - The car's speed perpendicular to the racing line is given by the d-speed: [0.1, 0.2, 0.3, 0.1, 0.0, 0.1, 0.2, 0.1]
+
+        
+        - The distance to the left wall is: [1.5, 1.4, 1.6, 1.5, 1.4, 1.5, 1.6, 1.5]
+
+
+        - The distance to the right wall is: [1.0, 1.1, 0.9, 1.0, 1.1, 1.0, 0.9, 1.0]
+
+ 
+        - Bool if the car is reversing: False
+
+          
+        - Bool if the car has crashed: False
+
+        
+        - Bool if the car is facing the wall: False
+
+
+   
+        Use these guides to reason: 
+
+
+
+    
+        Check if the car is adhering to what the human wants: Drive on the racing line. Strictly reply in the following format: 
+
+        Explanation: <Brief Explanation> 
+
+        Adhering to Human: <True/False> 
+
+        
+Model Response: Explanation: The car's s-speed is consistently increasing and decreasing around the racing line, indicating it is not maintaining a consistent trajectory. The d-speed is also inconsistent, suggesting the car is not maintaining a stable lateral position. The car's lateral deviation (d-coordinate) shows a pattern of increasing and decreasing, which is not optimal for a racing line. The distances to the walls are not constant, indicating the car is not maintaining a safe distance from the walls, which is crucial for adhering to the racing line.
+
+Adhering to Human: False
+Sanitized Output: False
+Expected Output: True
+--------------------------------------------------
+--------------------------------------------------
+=== OVERALL TOKEN STATS ===
+Prompt : mean 536.5, std 110.2, min 342, max 767
+RAG    : mean 0.0, std 0.0, min 0, max 0
+Output : mean 73.1, std 22.7, min 32, max 156
