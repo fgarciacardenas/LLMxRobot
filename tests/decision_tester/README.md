@@ -58,3 +58,50 @@ OPENAI_API_TOKEN=your_openai_key
 ---
 
 Happy Testing! 🚗💨
+
+
+# Remote Axelera board testing
+Command to use:
+```bash
+pip3 install pexpect
+python3 -m tests.decision_tester.decision_tester \
+  --dataset all --mini \
+  --ssh_interactive \
+  --ssh_host finsteraarhorn.ee.ethz.ch \
+  --ssh_user sem25h27 \
+  --ssh_workdir voyager-sdk \
+  --ssh_venv venv/bin/activate \
+  --ssh_run "./inference_llm.py llama-3-2-3b-1024-4core-static" \
+  --ssh_timeout 360 --ssh_password <pw>
+```
+
+# Local Axelera board testing
+```bash
+python3 -m tests.decision_tester.decision_tester \
+  --dataset all --mini \
+  --ax_local \
+  --local_workdir ~/voyager-sdk \
+  --local_venv venv/bin/activate \
+  --local_run "./inference_llm.py llama-3-2-3b-1024-4core-static" \
+  --local_timeout 420 \
+  --local_verbose
+```
+
+
+# Benchmark summary (decision tester logs)
+Use `summarize_benchmarks.py` to aggregate decision tester logs and export CSV/LaTeX tables for the Benchmarks spreadsheet.
+
+```bash
+# From repo root; point to the decision tester logs
+python3 src/LLMxRobot/tests/decision_tester/summarize_benchmarks.py \
+  --logs src/LLMxRobot/tests/decision_tester/logs/report_logs \
+  --csv-runs benchmarks_runs.csv \   # per-run metrics (optional)
+  --csv-agg benchmarks_agg.csv \     # grouped averages (optional)
+  --latex-out benchmarks_table.tex   # LaTeX sidewaystable (optional)
+```
+
+Notes:
+- `--latex-caption` and `--latex-label` customize the LaTeX caption/label.
+- Model label comes from the parent folder prefix (e.g., `Llama3-2_axelera_default` -> `Llama3-2`).
+- Quantization column renders `Q4.M` for GGUF, `INT8` for Axelera, otherwise `FP16` (or `Quantized` when flagged).
+- Model params are auto-filled for known prefixes: Llama3-2 (3.21 B), Phi3 (3.80 B), Qwen2-5-7B (7.61 B), Qwen2-5-3B (3.09 B); otherwise `--`.

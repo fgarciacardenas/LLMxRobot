@@ -1,9 +1,10 @@
 # Never push .env files because they contain sensitive information
 .env
 
-#logs
-**/logs/*.txt
-**/logs/**/
+# logs: drop every logs folder except the decision tester report logs
+**/logs/**
+*.tex
+!tests/decision_tester/logs/report_logs.zip
 
 #images
 *.png
@@ -39,3 +40,6 @@ tests/mpc_tester/eval/*
 #train outputs
 train/outputs/*
 train/dataset/combined/*
+
+# Temporary files
+data/

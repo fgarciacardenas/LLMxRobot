@@ -1,17 +1,34 @@
-from transformers import Pipeline, BitsAndBytesConfig
 from unsloth import FastLanguageModel
 from unsloth.chat_templates import get_chat_template
-import os, time
+from transformers import Pipeline, BitsAndBytesConfig, StoppingCriteria, StoppingCriteriaList
+import os, re, time
 import numpy as np
 import torch
 
-CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5"]
+CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5", "llama-3.2"]
+ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
+
+class StopAfterAdhering(StoppingCriteria):
+    """Stop generation once we see 'Adhering to Human: True/False' in generated text (excludes prompt)."""
+    def __init__(self, tokenizer, prompt_len: int):
+        super().__init__()
+        self.tokenizer = tokenizer
+        self.prompt_len = prompt_len
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
+        # Only inspect generated suffix, not the prompt
+        gen_ids = input_ids[0][self.prompt_len:]
+        if gen_ids.numel() == 0:
+            return False
+        text = self.tokenizer.decode(gen_ids, skip_special_tokens=False)
+        return ADHERING_RE.search(text) is not None
 
 class RaceLLMPipeline(Pipeline):
-    def __init__(self, chat_template, model_dir=None, max_seq_length=2048, max_new_tokes=512, dtype=torch.float16, load_in_4bit=False, model=None, tokenizer=None):
+    def __init__(self, chat_template, model_dir=None, max_seq_length=2048, max_new_tokes=512, dtype=torch.float16, load_in_4bit=False, model=None, tokenizer=None, binary_output=False):
         os.environ["TOKENIZERS_PARALLELISM"] = "false" # Avoids a warning
         self.chat_template = chat_template
         self.max_new_tokes = max_new_tokes
+        self.binary_output = binary_output
 
         # Load model and tokenizer via dir if not passed directly
         if model is None or tokenizer is None:
@@ -48,11 +65,17 @@ class RaceLLMPipeline(Pipeline):
         elif chat_template == "qwen-2.5":
             tokenizer = get_chat_template(
                 tokenizer,
-                chat_template="qwen-2.5",
+                chat_template=chat_template,
+                mapping={"role": "role", "content": "content", "user": "user", "assistant": "assistant"},
+            )
+        elif chat_template == "llama-3.2":
+            tokenizer = get_chat_template(
+                tokenizer,
+                chat_template=chat_template,
                 mapping={"role": "role", "content": "content", "user": "user", "assistant": "assistant"},
             )
         else:
-            raise ValueError(f"Chat template {chat_template} not recognized. Please use 'phi-3' or 'qwen-2.5'.")
+            raise ValueError(f"Chat template {chat_template} not recognized. Please use 'phi-3', 'qwen-2.5' or llama-3.2.")
         
         # Add pad token if it does not exist
         if tokenizer.pad_token is None:
@@ -87,18 +110,23 @@ class RaceLLMPipeline(Pipeline):
         return inputs
 
     def _forward(self, model_inputs, **forward_params):
+        stopper = None
+        if self.binary_output:
+            prompt_len = model_inputs["input_ids"].shape[1]
+            stopper = StoppingCriteriaList([StopAfterAdhering(self.tokenizer, prompt_len=prompt_len)])
         outputs = self.model.generate(
             input_ids=model_inputs["input_ids"], 
             attention_mask=model_inputs["attention_mask"],  # Explicit attention mask
             max_new_tokens=self.max_new_tokes, 
             use_cache=True,
-            temperature=1.0,
+            temperature=0.0,
             do_sample=False, # Greedy decoding
             top_k=20, # 20 Qwen recommended
             top_p=0.8, # 0.8 Qwen recommended
             repetition_penalty=1.0, # 1.0 = no penalty
             encoder_repetition_penalty=1.0, # 1.0 = no penalty
             length_penalty=-1.0, # < 0.0 encourages shorter sentences
+            stopping_criteria=stopper,
         )
         return self.tokenizer.batch_decode(outputs)
 
@@ -110,12 +138,25 @@ class RaceLLMPipeline(Pipeline):
         elif self.chat_template == "qwen-2.5":
             # Filter out the chat template for Qwen-2.5, extract content between <|im_start|>assistant and <|im_end|>
             model_outputs = [
-                output.split("<|im_start|>assistant")[1].split("<|im_end|>")[0].strip() 
+                output.split("<|im_start|>assistant")[1].split("<|im_end|>")[0].strip()
                 if "<|im_start|>assistant" in output and "<|im_end|>" in output
                 else output  # Fallback to raw output if markers are missing
                 for output in model_outputs
             ]
             return model_outputs[0], None, None
+        elif self.chat_template == "llama-3.2":
+            start_tag = "<|start_header_id|>assistant<|end_header_id|>"
+            end_tag = "<|eot_id|>"
+            cleaned_outputs = []
+            for output in model_outputs:
+                if start_tag in output:
+                    assistant_section = output.split(start_tag, 1)[1]
+                    if end_tag in assistant_section:
+                        assistant_section = assistant_section.split(end_tag, 1)[0]
+                    cleaned_outputs.append(assistant_section.strip())
+                else:
+                    cleaned_outputs.append(output)
+            return cleaned_outputs[0], None, None
         else:
             raise ValueError(f"Chat template {self.chat_template} not recognized.")
 

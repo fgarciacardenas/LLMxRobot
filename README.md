@@ -31,7 +31,7 @@ In our [CoRL 2025 paper](https://arxiv.org/abs/2505.03238), **RobotxR1: Enabling
 
 ### CUDA Platform (e.g., RTX 30xx / 40xx)
 
-1. Build the Docker container (adapt `CUDA_ARCH` accordingly: `86` for RTX 30xx, `89` for 40xx):
+1. Build the Docker container (adapt `CUDA_ARCH` accordingly: `75` for RTX20xx, `86` for RTX 30xx, `89` for 40xx):
    ```bash
    docker build --build-arg CUDA_ARCH=<your_compute_capability> -t embodiedai -f .docker_utils/Dockerfile.cuda .
    ```
