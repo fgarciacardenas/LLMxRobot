@@ -200,26 +200,31 @@ def format_latex_table(rows: List[Dict], caption: str, label: str) -> str:
     if not rows:
         return "% No rows to render\n"
 
+    # Precompute widths for padded "avg | parsed" cells to keep the '|' visually aligned
+    acc_left_w = max(len(f"{r['Accuracy macro all (%)']:.2f}") for r in rows)
+    acc_right_w = max(len(f"{r['Accuracy macro parsed (%)']:.2f}") for r in rows)
+    tok_left_w = max(len(f"{r['Output tokens']:.0f}") for r in rows)
+    tok_right_w = max(len(f"{r['Output tokens (filt)']:.0f}") for r in rows)
+
     lines = []
     lines.append(r"\section{Summary of results}")
     lines.append(r"\begin{sidewaystable}[h]")
     lines.append(r"  \centering")
     lines.append(r"  \setlength{\tabcolsep}{6pt}")
     lines.append(r"  \renewcommand{\arraystretch}{1.2}")
-    lines.append(r"  \begin{tabular}{lccccccccc}")
+    lines.append(r"  \begin{tabular}{lcccccccc}")
     lines.append(r"    \toprule")
-    lines.append(r"    \multicolumn{10}{c}{\cellcolor{ggufColor} \textbf{Accuracy metrics}} \\")
+    lines.append(r"    \multicolumn{9}{c}{\cellcolor{ggufColor} \textbf{Accuracy metrics}} \\")
     lines.append(r"    \midrule")
     lines.append(r"    \makecell{\textbf{Model}\\\textbf{name}} &")
+    lines.append(r"    \makecell{\textbf{Model}\\\textbf{Params}} \\")
     lines.append(r"    \makecell{\textbf{RAG}\\\textbf{type}} &")
     lines.append(r"    \makecell{\textbf{Device}\\\textbf{used}} &")
     lines.append(r"    \makecell{\textbf{Quant}\\\textbf{scheme}} &")
     lines.append(r"    \makecell{\textbf{Binary}\\\textbf{output}} &")
-    lines.append(r"    \makecell{\textbf{Accuracy}\\\textbf{(overall)}} &")
     lines.append(r"    \makecell{\textbf{Structure}\\\textbf{followed (\%)}} &")
-    lines.append(r"    \makecell{\textbf{Output}\\\textbf{tokens (avg.)}} &")
-    lines.append(r"    \makecell{\textbf{Output}\\\textbf{tokens (filt.)}} &")
-    lines.append(r"    \makecell{\textbf{Model}\\\textbf{Params}} \\")
+    lines.append(r"    \makecell{\textbf{Accuracy}\\\textbf{(avg. | parsed)}} &")
+    lines.append(r"    \makecell{\textbf{Output tokens}\\\textbf{(avg. | parsed)}} &")
     lines.append(r"    \midrule")
 
     for row in rows:
@@ -236,10 +241,18 @@ def format_latex_table(rows: List[Dict], caption: str, label: str) -> str:
             quant_scheme = "FP16"
 
         binary_tex = r"\cmark" if row["Binary"] == "Yes" else r"\xmark"
-        accuracy = f"{row['Accuracy macro all (%)']:.2f}\\%"
         structure = f"{row['Structure followed (%)']:.2f}\\%"
-        out_tok = f"{row['Output tokens']:.0f}"
-        out_tok_filt = f"{row['Output tokens (filt)']:.0f}"
+        acc_l = f"{row['Accuracy macro all (%)']:.2f}"
+        acc_r = f"{row['Accuracy macro parsed (%)']:.2f}"
+        acc_pad_l = r"\hphantom{" + "0" * (acc_left_w - len(acc_l)) + "}"
+        acc_pad_r = r"\hphantom{" + "0" * (acc_right_w - len(acc_r)) + "}"
+        accuracy = f"{acc_pad_l}{acc_l} | {acc_r}{acc_pad_r}\\%"
+
+        tok_l = f"{row['Output tokens']:.0f}"
+        tok_r = f"{row['Output tokens (filt)']:.0f}"
+        tok_pad_l = r"\hphantom{" + "0" * (tok_left_w - len(tok_l)) + "}"
+        tok_pad_r = r"\hphantom{" + "0" * (tok_right_w - len(tok_r)) + "}"
+        out_tok = f"{tok_pad_l}{tok_l} | {tok_r}{tok_pad_r}"
         model_params = row.get("Model Params", "--")
 
         lines.append(
@@ -247,15 +260,14 @@ def format_latex_table(rows: List[Dict], caption: str, label: str) -> str:
             + " & ".join(
                 [
                     latex_escape(str(row["Model"])),
+                    latex_escape(str(model_params)),
                     rag_tex,
                     latex_escape(str(row["Device"])),
                     latex_escape(quant_scheme),
                     binary_tex,
-                    accuracy,
                     structure,
+                    accuracy,
                     out_tok,
-                    out_tok_filt,
-                    latex_escape(str(model_params)),
                 ]
             )
             + r" \\"
