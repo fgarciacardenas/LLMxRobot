@@ -681,7 +681,12 @@ if __name__ == '__main__':
             from inference.inf_gguf import RaceLLMGGGUF
             # Find gguf in model_dir
             gguf_name = [f for f in os.listdir(model_dir) if f.endswith('.gguf')][0]
-            llm = RaceLLMGGGUF(model_dir=model_dir, gguf_name=gguf_name, binary_output=args.binary_output)
+            llm = RaceLLMGGGUF(
+                model_dir=model_dir,
+                gguf_name=gguf_name,
+                chat_format=chat_template,
+                binary_output=args.binary_output,
+            )
             print(f"Using model {gguf_name} from {model_dir}")
         else:
             if getattr(args, "ax_local", False):

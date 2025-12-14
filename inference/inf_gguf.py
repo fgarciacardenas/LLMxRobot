@@ -9,9 +9,10 @@ class RaceLLMGGGUF:
         self.max_tokens = max_tokens
         self.path = os.path.join(model_dir, gguf_name)
         self.binary_output = binary_output
+        self.chat_format = self._normalize_chat_format(chat_format)
         self.llm = Llama(
             model_path=self.path,
-            chat_format=chat_format,
+            chat_format=self.chat_format,
             n_gpu_layers=n_gpu_layers,
             n_ctx=n_ctx,
             seed=42,
@@ -39,14 +40,41 @@ class RaceLLMGGGUF:
         out_tokens = output['usage']['completion_tokens']
         return out_text, input_tokens, out_tokens
 
+    def _normalize_chat_format(self, chat_format: str) -> str:
+        """
+        Map higher-level template names to llama.cpp registered handlers.
+        phi-3 SFTs use ChatML; qwen-2.5 -> qwen; llama-3.2 -> llama-3.
+        """
+        cf = (chat_format or "").lower()
+        if cf in ("phi-3", "phi3"):
+            return "chatml"
+        if cf in ("qwen-2.5", "qwen2.5", "qwen2", "qwen"):
+            return "qwen"
+        if cf in ("llama-3.2", "llama-3.1", "llama-3", "llama3"):
+            return "llama-3"
+        return cf or "llama-3"
+
     def _build_stop_list(self):
-        base = [
+        base = []
+        # Prefer the chat handler's defaults so we do not override built-in stop tokens (e.g., chatml <|im_end|>)
+        handler = getattr(self.llm, "_chat_handler", None) or getattr(self.llm, "chat_handler", None)
+        handler_stop = getattr(handler, "stop", None)
+        if isinstance(handler_stop, (list, tuple)):
+            base.extend(handler_stop)
+
+        # Legacy generic stops (kept for backwards compatibility)
+        base.extend([
             "[/INST]", "[\\/INST]", "[;/INST] ", "[INST]", "[/?]", "[/Dk]", "[;/Rationale]",
             "[Rationale]", "[;/Action]", "[;/Explanation]",
-        ]
-        if self.binary_output:
-            base.extend(["Adhering to Human: True", "Adhering to Human: False"])
-        return base
+        ])
+        # Drop dupes while preserving order
+        seen = set()
+        deduped = []
+        for s in base:
+            if s not in seen:
+                deduped.append(s)
+                seen.add(s)
+        return deduped
 
 # Loads Prompt with hints
 def load_prompt(prompt_type) -> str:

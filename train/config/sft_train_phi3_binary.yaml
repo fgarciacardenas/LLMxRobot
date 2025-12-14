@@ -1,7 +1,7 @@
 # Fine-tune Phi-3 for binary adherence output (Adhering to Human: True/False)
 training:
   out_dir: "train/outputs"
-  dataset_dir: "train/dataset/sft/binary_phi3"  # Contains combined/full_data.json
+  dataset_dir: "train/dataset/sft/binary"  # Contains combined/full_data.json
   train_bool: true
   chat_template: "phi-3"  # Phi-3 chat template (human/gpt roles)
   seed: 3407
