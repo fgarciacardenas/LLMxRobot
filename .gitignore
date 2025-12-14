@@ -43,3 +43,6 @@ train/dataset/combined/*
 
 # Temporary files
 data/
+
+# Cache files
+.hf_cache/
