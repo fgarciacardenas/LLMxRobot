@@ -1,0 +1,80 @@
+{
+  "logs_root": "src/LLMxRobot/tests/decision_tester/logs/report_logs",
+  "out_dir": "tables",
+  "tables": [
+    {
+      "name": "onboard",
+      "out": "onboard.tex",
+      "caption": "Comparison of evaluated models for different RAG configurations.",
+      "label": "tab:onboard-RAG",
+      "items": [
+        "Llama3-2_unsloth_default",
+        "midrule",
+        "Phi3_unsloth_default",
+        "midrule",
+        "Qwen2-5-3B_unsloth_default",
+        "midrule",
+        "Qwen2-5-7B_unsloth_default"
+      ]
+    },
+    {
+      "name": "binary",
+      "out": "binary.tex",
+      "caption": "Comparison of evaluated models with binary output format.",
+      "label": "tab:binary",
+      "items": [
+        "Llama3-2_unsloth_default",
+        "Llama3-2_unsloth_binary",
+        "midrule",
+        "Phi3_unsloth_default",
+        "Phi3_unsloth_binary",
+        "midrule",
+        "Qwen2-5-3B_unsloth_default",
+        "Qwen2-5-3B_unsloth_binary",
+        "midrule",
+        "Qwen2-5-7B_unsloth_default",
+        "Qwen2-5-7B_unsloth_binary"
+      ]
+    },
+    {
+      "name": "gguf",
+      "out": "gguf.tex",
+      "caption": "Comparison of evaluated quantized models with GGUF.",
+      "label": "tab:gguf",
+      "items": [
+        "Llama3-2_unsloth_default",
+        "Llama3-2_unsloth_binary",
+        "Llama3-2-Q4_gguf_default",
+        "Llama3-2-Q4_gguf_binary",
+        "midrule",
+        "Phi3_unsloth_default",
+        "Phi3_unsloth_binary",
+        "Phi3_gguf_default",
+        "Phi3_gguf_binary"
+      ]
+    },
+    {
+      "name": "qwen_3b",
+      "out": "qwen_3b.tex",
+      "caption": "Accuracy metrics for Qwen2.5-3B runs.",
+      "label": "tab:qwen-3b-acc",
+      "items": [
+        "Qwen2-5-3B_unsloth_default",
+        "midrule",
+        "Qwen2-5-3B_unsloth_binary",
+        "midrule",
+        { "select": { "parent": "Qwen2-5-3B-SFT_default" } },
+        { "select": { "parent": "Qwen2-5-3B-SFT_binary" } }
+      ]
+    },
+    {
+      "name": "qwen_all_binary",
+      "out": "qwen_all_binary.tex",
+      "caption": "All Qwen runs with binary output enabled.",
+      "label": "tab:qwen-binary-acc",
+      "items": [
+        { "select": { "path_contains": ["qwen", "binary"] } }
+      ]
+    }
+  ]
+}

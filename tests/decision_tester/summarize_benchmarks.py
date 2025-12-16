@@ -8,20 +8,25 @@ computes per-run metrics, and optionally emits grouped averages per
 repo root.
 
 Example:
-    python scripts/summarize_benchmarks.py \
+    python src/LLMxRobot/tests/decision_tester/summarize_benchmarks.py \
         --logs logs/report_logs \
         --csv-runs benchmarks_runs.csv \
         --csv-agg benchmarks_agg.csv
+
+Generate multiple LaTeX tables from a JSON config:
+    python src/LLMxRobot/tests/decision_tester/summarize_benchmarks.py \
+        --tables-config src/LLMxRobot/tests/decision_tester/tables_config.example.json
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import fnmatch
 import json
 from pathlib import Path
 from statistics import mean
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 MODEL_PARAM_MAP = {
     "llama3-2": "3.21 B",
@@ -36,7 +41,7 @@ def infer_rag_label(entry: Dict) -> str:
     if rag_mode == "online":
         return "GPT-4o"
     if rag_mode == "offline":
-        return "BAAI"
+        return "BGE"
     return "None"
 
 
@@ -191,12 +196,15 @@ def latex_escape(text: str) -> str:
             .replace("#", r"\#")
     )
 
+_MIDRULE: Dict[str, bool] = {"__midrule__": True}
 
-def format_latex_table(rows: List[Dict], caption: str, label: str) -> str:
+
+def format_latex_table(rows_or_markers: List[Dict], caption: str, label: str) -> str:
     """
     Build a LaTeX sidewaystable with the key metrics.
     Uses Accuracy macro all (%) as the overall accuracy.
     """
+    rows = [r for r in rows_or_markers if not r.get("__midrule__")]
     if not rows:
         return "% No rows to render\n"
 
@@ -207,8 +215,7 @@ def format_latex_table(rows: List[Dict], caption: str, label: str) -> str:
     tok_right_w = max(len(f"{r['Output tokens (filt)']:.0f}") for r in rows)
 
     lines = []
-    lines.append(r"\section{Summary of results}")
-    lines.append(r"\begin{sidewaystable}[h]")
+    lines.append(r"\begin{sidewaystable}")
     lines.append(r"  \centering")
     lines.append(r"  \setlength{\tabcolsep}{6pt}")
     lines.append(r"  \renewcommand{\arraystretch}{1.2}")
@@ -217,17 +224,21 @@ def format_latex_table(rows: List[Dict], caption: str, label: str) -> str:
     lines.append(r"    \multicolumn{9}{c}{\cellcolor{ggufColor} \textbf{Accuracy metrics}} \\")
     lines.append(r"    \midrule")
     lines.append(r"    \makecell{\textbf{Model}\\\textbf{name}} &")
-    lines.append(r"    \makecell{\textbf{Model}\\\textbf{Params}} \\")
+    lines.append(r"    \makecell{\textbf{Model}\\\textbf{Params}} &")
     lines.append(r"    \makecell{\textbf{RAG}\\\textbf{type}} &")
     lines.append(r"    \makecell{\textbf{Device}\\\textbf{used}} &")
     lines.append(r"    \makecell{\textbf{Quant}\\\textbf{scheme}} &")
     lines.append(r"    \makecell{\textbf{Binary}\\\textbf{output}} &")
     lines.append(r"    \makecell{\textbf{Structure}\\\textbf{followed (\%)}} &")
     lines.append(r"    \makecell{\textbf{Accuracy}\\\textbf{(avg. | parsed)}} &")
-    lines.append(r"    \makecell{\textbf{Output tokens}\\\textbf{(avg. | parsed)}} &")
+    lines.append(r"    \makecell{\textbf{Output tokens}\\\textbf{(avg. | parsed)}} \\")
     lines.append(r"    \midrule")
 
-    for row in rows:
+    for row in rows_or_markers:
+        if row.get("__midrule__"):
+            lines.append(r"    \midrule")
+            continue
+
         rag = row["RAG"]
         rag_tex = r"\xmark" if rag == "None" else latex_escape(rag)
         # Quant scheme: GGUF -> Q4.M, Axelera -> INT8, else FP16 unless marked quantized
@@ -309,6 +320,136 @@ def write_csv(rows: List[Dict], path: Path) -> None:
         writer.writerows(rows)
 
 
+def _sort_agg_rows(rows: List[Dict]) -> List[Dict]:
+    rag_order = {"None": 0, "GPT-4o": 1, "BGE": 2}
+    device_order = {"GPU": 0, "Axelera": 1, "GGUF": 2}
+    binary_order = {"No": 0, "Yes": 1}
+    quant_order = {"No": 0, "Yes": 1}
+
+    def key(r: Dict) -> Tuple:
+        return (
+            str(r.get("Model", "")),
+            rag_order.get(r.get("RAG"), 99),
+            device_order.get(r.get("Device"), 99),
+            quant_order.get(r.get("Quantized"), 99),
+            binary_order.get(r.get("Binary"), 99),
+        )
+
+    return sorted(rows, key=key)
+
+
+def _row_matches_selector(row: Dict, selector: Dict[str, Any]) -> bool:
+    """
+    Selector keys (all optional):
+      - parent: str or [str] exact match on run directory parent name (folder under report_logs)
+      - path_contains: [str] case-insensitive substrings required in the run path
+      - path_glob: str or [str] fnmatch glob(s) matched against the run path
+    """
+    run_path = Path(row.get("Run", ""))
+    parent_name = run_path.parent.name
+    run_str = run_path.as_posix()
+    run_low = run_str.lower()
+
+    if "parent" in selector:
+        allowed = selector["parent"]
+        if isinstance(allowed, str):
+            allowed = [allowed]
+        if parent_name not in set(allowed):
+            return False
+
+    if "path_contains" in selector:
+        subs = selector["path_contains"] or []
+        if not all(str(s).lower() in run_low for s in subs):
+            return False
+
+    if "path_glob" in selector:
+        pats = selector["path_glob"]
+        if isinstance(pats, str):
+            pats = [pats]
+        if not any(fnmatch.fnmatch(run_str, pat) for pat in pats):
+            return False
+
+    return True
+
+
+def generate_tables_from_config(config_path: Path) -> None:
+    """
+    Generate multiple LaTeX tables from a JSON config file.
+
+    Top-level keys:
+      - logs_root: base folder to scan (default: logs/report_logs)
+      - out_dir: base output folder (default: .)
+      - tables: list of table specs
+
+    Table spec keys:
+      - name: identifier (optional)
+      - out: output file path (required; relative to out_dir unless absolute)
+      - caption: LaTeX caption (optional)
+      - label: LaTeX label (optional)
+      - items: ordered list; each item is one of:
+          - "midrule" or {"midrule": true}
+          - "<folder_name>" (treated as {"parent": "<folder_name>"})
+          - {"select": {...}} where select supports parent/path_contains/path_glob
+          - {...} selector directly (parent/path_contains/path_glob)
+    """
+    cfg = json.loads(config_path.read_text())
+    logs_root = Path(cfg.get("logs_root", "logs/report_logs"))
+    out_dir = Path(cfg.get("out_dir", "."))
+    tables = cfg.get("tables", [])
+    if not isinstance(tables, list) or not tables:
+        raise SystemExit("Config must contain a non-empty 'tables' list.")
+
+    if not logs_root.exists():
+        raise SystemExit(f"Log directory not found: {logs_root}")
+
+    run_dirs = sorted({fp.parent for fp in logs_root.rglob("*_samples.json")})
+    run_rows = [row for rd in run_dirs if (row := summarize_run(rd))]
+
+    for table in tables:
+        name = table.get("name", "table")
+        out = table.get("out")
+        if not out:
+            raise SystemExit(f"Table '{name}' is missing required field 'out'.")
+        out_path = Path(out)
+        if not out_path.is_absolute():
+            out_path = out_dir / out_path
+
+        caption = table.get("caption", "Accuracy metrics summary")
+        label = table.get("label", f"tab:{name}")
+
+        items = table.get("items", [])
+        if not isinstance(items, list) or not items:
+            raise SystemExit(f"Table '{name}' must have a non-empty 'items' list.")
+
+        rendered: List[Dict] = []
+        for item in items:
+            if item == "midrule" or (isinstance(item, dict) and item.get("midrule") is True):
+                if rendered and not rendered[-1].get("__midrule__"):
+                    rendered.append(_MIDRULE)
+                continue
+
+            if isinstance(item, str):
+                selector: Dict[str, Any] = {"parent": item}
+            elif isinstance(item, dict) and "select" in item:
+                selector = item.get("select") or {}
+            elif isinstance(item, dict):
+                selector = item
+            else:
+                raise SystemExit(f"Table '{name}': unsupported item: {item!r}")
+
+            filtered = [r for r in run_rows if _row_matches_selector(r, selector)]
+            agg = _sort_agg_rows(aggregate_rows(filtered))
+            rendered.extend(agg)
+
+        if rendered and rendered[-1].get("__midrule__"):
+            rendered.pop()
+
+        latex = format_latex_table(rendered, caption=caption, label=label)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(latex)
+        print(f"Wrote LaTeX table '{name}' to {out_path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize decision tester logs for Benchmarks.xlsx.")
     parser.add_argument("--logs", type=Path,
@@ -324,7 +465,13 @@ def main() -> None:
                         help="Caption for the LaTeX table.")
     parser.add_argument("--latex-label", type=str, default="tab:accuracy-metrics",
                         help="Label for the LaTeX table.")
+    parser.add_argument("--tables-config", type=Path, default=None,
+                        help="JSON config describing multiple LaTeX tables to generate.")
     args = parser.parse_args()
+
+    if args.tables_config:
+        generate_tables_from_config(args.tables_config)
+        return
 
     if not args.logs.exists():
         raise SystemExit(f"Log directory not found: {args.logs}")
