@@ -6,8 +6,10 @@
       "name": "onboard",
       "out": "onboard.tex",
       "caption": "Comparison of evaluated models for different RAG configurations.",
-      "label": "tab:onboard-RAG",
+      "label": "tab:onboard",
       "items": [
+        "Llama3-1_unsloth_default",
+        "midrule",
         "Llama3-2_unsloth_default",
         "midrule",
         "Phi3_unsloth_default",
@@ -61,8 +63,8 @@
       "items": [
         "Llama3-2_unsloth_default",
         "Llama3-2_unsloth_binary",
-        "Llama3-2-3B_axelera_default",
-        "Llama3-2-3B_axelera_binary",
+        "Llama3-2_axelera_default",
+        "Llama3-2_axelera_binary",
         "midrule",
         "Phi3_unsloth_default",
         "Phi3_unsloth_binary",
@@ -97,6 +99,54 @@
         "midrule",
         "Qwen2-5-7B-SFT_default",
         "Qwen2-5-7B-SFT_binary"
+      ]
+    },
+    {
+      "name": "llama-gguf",
+      "out": "llama-gguf.tex",
+      "caption": "Comparison of Llama3 GGUF models with different quantization approaches.",
+      "label": "tab:llama-gguf",
+      "items": [
+        "Llama3-2-Q4_gguf_default",
+        "Llama3-2-Q4_gguf_binary",
+        "midrule",
+        "Llama3-2-Q5_gguf_default",
+        "Llama3-2-Q5_gguf_binary",
+        "midrule",
+        "Llama3-2-Q8_gguf_default",
+        "Llama3-2-Q8_gguf_binary"
+      ]
+    },
+    {
+      "name": "phi-gguf",
+      "out": "phi-gguf.tex",
+      "caption": "Comparison of Phi3 GGUF models with different quantization approaches.",
+      "label": "tab:phi-gguf",
+      "items": [
+        "Phi3_gguf_default",
+        "Phi3_gguf_binary",
+        "midrule",
+        "Phi3-Q5_gguf_default",
+        "Phi3-Q5_gguf_binary",
+        "midrule",
+        "Phi3-Q8_gguf_default",
+        "Phi3-Q8_gguf_binary"
+      ]
+    },
+    {
+      "name": "llama-8b",
+      "out": "llama-8b.tex",
+      "caption": "Comparison of Llama3.1-8B models.",
+      "label": "tab:llama-8b",
+      "items": [
+        "Llama3-1-NI_unsloth_default",
+        "Llama3-1-NI_unsloth_binary",
+        "midrule",
+        "Llama3-1_unsloth_default",
+        "Llama3-1_unsloth_binary",
+        "midrule",
+        "Llama3-1_axelera_default",
+        "Llama3-1_axelera_binary"
       ]
     },
     {

@@ -29,11 +29,34 @@ from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 MODEL_PARAM_MAP = {
+    "llama3-1": "8.03 B",
     "llama3-2": "3.21 B",
     "phi3": "3.80 B",
     "qwen2-5-7b": "7.61 B",
     "qwen2-5-3b": "3.09 B",
 }
+
+MODEL_DISPLAY_MAP = [
+    ("llama3-1", "Llama3.1"),
+    ("llama3-2", "Llama3.2"),
+    ("phi3", "Phi3"),
+    ("qwen2-5", "Qwen2.5"),
+]
+
+
+def map_model_name(extracted_model_name: str) -> str:
+    extracted_lower = extracted_model_name.lower()
+    mapped = next(
+        (pretty for needle, pretty in MODEL_DISPLAY_MAP if needle in extracted_lower),
+        extracted_model_name,
+    )
+    if "NI" in extracted_model_name and not mapped.endswith("-NI"):
+        mapped = f"{mapped}-NI"
+    if "2048" in extracted_model_name and not mapped.endswith("-2048"):
+        mapped = f"{mapped}-2048"
+    if "SFT" in extracted_model_name.upper() and not mapped.endswith("-SFT"):
+        mapped = f"{mapped}-SFT"
+    return mapped
 
 
 def infer_rag_label(entry: Dict) -> str:
@@ -62,6 +85,31 @@ def infer_quantized(model_name: str, run_dir: Path) -> str:
 
 def infer_binary(run_dir: Path) -> str:
     return "Yes" if any("binary" in part.lower() for part in run_dir.parts) else "No"
+
+
+def infer_quant_scheme(extracted_model_name: str, run_dir: Path, device: str, quantized: str) -> str:
+    if device == "Axelera":
+        return "INT8"
+    if device == "GGUF":
+        extracted_upper = extracted_model_name.upper()
+        if "Q8" in extracted_upper:
+            return "Q8.0"
+        if "Q5" in extracted_upper:
+            return "Q5.M"
+        if "Q4" in extracted_upper:
+            return "Q4.M"
+
+        blob_upper = f"{' '.join(run_dir.parts)}".upper()
+        if "Q8" in blob_upper:
+            return "Q8.0"
+        if "Q5" in blob_upper:
+            return "Q5.M"
+        if "Q4" in blob_upper:
+            return "Q4.M"
+        return "Q4.M"
+    if quantized == "Yes":
+        return "Quantized"
+    return "FP16"
 
 
 def load_entries(files: Iterable[Path]) -> List[Dict]:
@@ -137,18 +185,23 @@ def summarize_run(run_dir: Path) -> Optional[Dict]:
 
     first = entries[0]
     # Model label: first segment of parent folder, split by underscore (e.g., Llama3-2_axelera_default -> Llama3-2)
-    model_name = run_dir.parent.name.split("_", 1)[0]
+    extracted_model_name = run_dir.parent.name.split("_", 1)[0]
+    model_name = map_model_name(extracted_model_name)
+    device = infer_device(extracted_model_name, run_dir)
+    quantized = infer_quantized(extracted_model_name, run_dir)
+    quant_scheme = infer_quant_scheme(extracted_model_name, run_dir, device=device, quantized=quantized)
     model_params = next(
-        (v for k, v in MODEL_PARAM_MAP.items() if model_name.lower().startswith(k)),
+        (v for k, v in MODEL_PARAM_MAP.items() if extracted_model_name.lower().startswith(k)),
         "--",
     )
 
     return {
         "Model": model_name,
         "RAG": infer_rag_label(first),
-        "Device": infer_device(model_name, run_dir),
-        "Quantized": infer_quantized(model_name, run_dir),
+        "Device": device,
+        "Quantized": quantized,
         "Binary": infer_binary(run_dir),
+        "__Quant scheme": quant_scheme,
         "Model Params": model_params,
         "Accuracy micro parsed (%)": round(acc_micro_parsed * 100, 2),
         "Accuracy macro parsed (%)": round(acc_macro_parsed * 100, 2),
@@ -169,12 +222,16 @@ def aggregate_rows(rows: List[Dict]) -> List[Dict]:
 
     agg_rows: List[Dict] = []
     for key, items in sorted(grouped.items()):
+        quant_schemes = {i.get("__Quant scheme") for i in items}
+        quant_schemes.discard(None)
+        quant_scheme = next(iter(quant_schemes)) if len(quant_schemes) == 1 else None
         agg_rows.append({
             "Model": key[0],
             "RAG": key[1],
             "Device": key[2],
             "Quantized": key[3],
             "Binary": key[4],
+            "__Quant scheme": quant_scheme,
             "Model Params": items[0].get("Model Params", "--"),
             "Runs": len(items),
             "Accuracy micro parsed (%)": round(mean(i["Accuracy micro parsed (%)"] for i in items), 2),
@@ -241,15 +298,15 @@ def format_latex_table(rows_or_markers: List[Dict], caption: str, label: str) ->
 
         rag = row["RAG"]
         rag_tex = r"\xmark" if rag == "None" else latex_escape(rag)
-        # Quant scheme: GGUF -> Q4.M, Axelera -> INT8, else FP16 unless marked quantized
-        if row["Device"] == "GGUF":
-            quant_scheme = "Q4.M"
-        elif row["Device"] == "Axelera":
-            quant_scheme = "INT8"
-        elif row["Quantized"] == "Yes":
-            quant_scheme = "Quantized"
-        else:
-            quant_scheme = "FP16"
+        quant_scheme = row.get("__Quant scheme") or (
+            "Q4.M"
+            if row["Device"] == "GGUF"
+            else "INT8"
+            if row["Device"] == "Axelera"
+            else "Quantized"
+            if row["Quantized"] == "Yes"
+            else "FP16"
+        )
 
         binary_tex = r"\cmark" if row["Binary"] == "Yes" else r"\xmark"
         structure = f"{row['Structure followed (%)']:.2f}\\%"
@@ -297,7 +354,7 @@ def print_table(rows: List[Dict], title: str) -> None:
         print(f"{title}: no rows")
         return
 
-    headers = list(rows[0].keys())
+    headers = [k for k in rows[0].keys() if not str(k).startswith("__")]
     widths = {h: max(len(h), max(len(str(r[h])) for r in rows)) for h in headers}
 
     print(f"\n{title}")
@@ -313,9 +370,9 @@ def write_csv(rows: List[Dict], path: Path) -> None:
     if not rows:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    headers = list(rows[0].keys())
+    headers = [k for k in rows[0].keys() if not str(k).startswith("__")]
     with path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=headers)
+        writer = csv.DictWriter(f, fieldnames=headers, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
