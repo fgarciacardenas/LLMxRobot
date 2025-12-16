@@ -54,6 +54,52 @@
       ]
     },
     {
+      "name": "axelera",
+      "out": "axelera.tex",
+      "caption": "Comparison of evaluated models on Axelera.",
+      "label": "tab:axelera",
+      "items": [
+        "Llama3-2_unsloth_default",
+        "Llama3-2_unsloth_binary",
+        "Llama3-2-3B_axelera_default",
+        "Llama3-2-3B_axelera_binary",
+        "midrule",
+        "Phi3_unsloth_default",
+        "Phi3_unsloth_binary",
+        "Phi3_axelera_default",
+        "Phi3_axelera_binary"
+      ]
+    },
+    {
+      "name": "axelera-context",
+      "out": "axelera-context.tex",
+      "caption": "Comparison of Phi3 models with different context length on Axelera.",
+      "label": "tab:axelera-context",
+      "items": [
+        "Phi3_axelera_default",
+        "Phi32048_axelera2048_default"
+      ]
+    },
+    {
+      "name": "sft",
+      "out": "sft.tex",
+      "caption": "Comparison of evaluated models with SFT.",
+      "label": "tab:sft",
+      "items": [
+        "Qwen2-5-3B_unsloth_default",
+        "Qwen2-5-3B_unsloth_binary",
+        "midrule",
+        "Qwen2-5-3B-SFT_default",
+        "Qwen2-5-3B-SFT_binary",
+        "midrule",
+        "Qwen2-5-7B_unsloth_default",
+        "Qwen2-5-7B_unsloth_binary",
+        "midrule",
+        "Qwen2-5-7B-SFT_default",
+        "Qwen2-5-7B-SFT_binary"
+      ]
+    },
+    {
       "name": "qwen_3b",
       "out": "qwen_3b.tex",
       "caption": "Accuracy metrics for Qwen2.5-3B runs.",
