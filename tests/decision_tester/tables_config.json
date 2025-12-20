@@ -51,8 +51,8 @@
         "midrule",
         "Phi3_unsloth_default",
         "Phi3_unsloth_binary",
-        "Phi3_gguf_default",
-        "Phi3_gguf_binary"
+        "Phi3-Q4_gguf_default",
+        "Phi3-Q4_gguf_binary"
       ]
     },
     {
@@ -123,8 +123,8 @@
       "caption": "Comparison of Phi3 GGUF models with different quantization approaches.",
       "label": "tab:phi-gguf",
       "items": [
-        "Phi3_gguf_default",
-        "Phi3_gguf_binary",
+        "Phi3-Q4_gguf_default",
+        "Phi3-Q4_gguf_binary",
         "midrule",
         "Phi3-Q5_gguf_default",
         "Phi3-Q5_gguf_binary",

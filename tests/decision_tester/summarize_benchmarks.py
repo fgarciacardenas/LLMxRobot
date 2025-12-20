@@ -62,7 +62,7 @@ def map_model_name(extracted_model_name: str) -> str:
 def infer_rag_label(entry: Dict) -> str:
     rag_mode = (entry.get("rag_mode") or "").lower()
     if rag_mode == "online":
-        return "GPT-4o"
+        return "OpenAI"
     if rag_mode == "offline":
         return "BGE"
     return "None"
@@ -378,7 +378,7 @@ def write_csv(rows: List[Dict], path: Path) -> None:
 
 
 def _sort_agg_rows(rows: List[Dict]) -> List[Dict]:
-    rag_order = {"None": 0, "GPT-4o": 1, "BGE": 2}
+    rag_order = {"None": 0, "OpenAI": 1, "BGE": 2}
     device_order = {"GPU": 0, "Axelera": 1, "GGUF": 2}
     binary_order = {"No": 0, "Yes": 1}
     quant_order = {"No": 0, "Yes": 1}
