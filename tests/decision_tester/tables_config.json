@@ -17,7 +17,7 @@
     {
       "name": "onboard",
       "out": "onboard.tex",
-      "caption": "Comparison of evaluated models for different RAG configurations.",
+      "caption": "GPU FP16 baselines comparing no retrieval against online OpenAI-embedding retrieval and on-board BGE retrieval.",
       "label": "tab:onboard",
       "env": "table",
       "columns": [
@@ -44,7 +44,7 @@
     {
       "name": "binary",
       "out": "binary.tex",
-      "caption": "Comparison of evaluated models with binary output format.",
+      "caption": "Binary decision head with early stopping (GPU): models evaluated with/without retrieval (OpenAI embeddings, on-board BGE).",
       "label": "tab:binary",
       "env": "table",
       "columns": [
@@ -57,6 +57,9 @@
         "output_tokens"
       ],
       "items": [
+        "Llama3-1-fixed_unsloth_default",
+        "Llama3-1_unsloth_binary",
+        "midrule",
         "Llama3-2_unsloth_default",
         "Llama3-2_unsloth_binary",
         "midrule",
@@ -73,7 +76,7 @@
     {
       "name": "gguf",
       "out": "gguf.tex",
-      "caption": "Comparison of evaluated quantized models with GGUF.",
+      "caption": "Overview of GGUF quantization on CPU (Q4.M) compared to GPU FP16 for Phi-3 and Llama-3.2, including retrieval settings and binary/explanatory outputs.",
       "label": "tab:gguf",
       "items": [
         "Llama3-2_unsloth_default",
@@ -90,7 +93,7 @@
     {
       "name": "axelera",
       "out": "axelera.tex",
-      "caption": "Comparison of evaluated models on Axelera.",
+      "caption": "GPU FP16 vs Axelera Metis INT8 accuracy for Phi-3 and Llama-3.2 across retrieval settings and output modes (explanatory vs binary).",
       "label": "tab:axelera",
       "items": [
         "Llama3-2_unsloth_default",
@@ -107,8 +110,18 @@
     {
       "name": "axelera-context",
       "out": "axelera-context.tex",
-      "caption": "Comparison of Phi3 models with different context length on Axelera.",
+      "caption": "Effect of Axelera context window (1024 vs 2048) on Phi-3 INT8 accuracy across retrieval settings.",
       "label": "tab:axelera-context",
+      "env": "table",
+      "columns": [
+        "model",
+        "model_params",
+        "rag",
+        "device",
+        "structure",
+        "accuracy",
+        "output_tokens"
+      ],
       "items": [
         "Phi3_axelera_default",
         "Phi32048_axelera2048_default"
@@ -117,7 +130,7 @@
     {
       "name": "sft",
       "out": "sft.tex",
-      "caption": "Comparison of evaluated models with SFT.",
+      "caption": "Effect of supervised fine-tuning (SFT) on Qwen2.5 (3B/7B) across retrieval settings, in explanatory and binary modes.",
       "label": "tab:sft",
       "items": [
         "Qwen2-5-3B_unsloth_default",
@@ -136,25 +149,31 @@
     {
       "name": "llama-gguf",
       "out": "llama-gguf.tex",
-      "caption": "Comparison of Llama3 GGUF models with different quantization approaches.",
+      "caption": "Llama-3.2 accuracy under GPU FP16 and GGUF quantization (Q4.M/Q5.M/Q8.0) across retrieval settings; binary rows use the strict single-line prefix constraint.",
       "label": "tab:llama-gguf",
       "items": [
+        "Llama3-2_unsloth_default",
+        "Llama3-2-fixed_unsloth_binary",
+        "midrule",
         "Llama3-2-Q4_gguf_default",
-        "Llama3-2-Q4_gguf_binary",
+        "Llama3-2-Q4-fixed_gguf_binary",
         "midrule",
         "Llama3-2-Q5_gguf_default",
-        "Llama3-2-Q5_gguf_binary",
+        "Llama3-2-Q5-fixed_gguf_binary",
         "midrule",
         "Llama3-2-Q8_gguf_default",
-        "Llama3-2-Q8_gguf_binary"
+        "Llama3-2-Q8-fixed_gguf_binary"
       ]
     },
     {
       "name": "phi-gguf",
       "out": "phi-gguf.tex",
-      "caption": "Comparison of Phi3 GGUF models with different quantization approaches.",
+      "caption": "Phi-3 accuracy under GPU FP16 and GGUF quantization (Q4.M/Q5.M/Q8.0) across retrieval settings, in explanatory and binary modes.",
       "label": "tab:phi-gguf",
       "items": [
+        "Phi3_unsloth_default",
+        "Phi3_unsloth_binary",
+        "midrule",
         "Phi3-Q4_gguf_default",
         "Phi3-Q4_gguf_binary",
         "midrule",
@@ -168,23 +187,30 @@
     {
       "name": "llama-8b",
       "out": "llama-8b.tex",
-      "caption": "Comparison of Llama3.1-8B models.",
+      "caption": "Instruction tuning ablation for Llama-3.1 8B in explanatory and binary modes under no-RAG/OpenAI/BGE retrieval; binary rows use the Llama-only strict single-line prefix constraint from Section~\\\\ref{sec:results_binary}.",
       "label": "tab:llama-8b",
+      "env": "table",
+      "columns": [
+        "model",
+        "model_params",
+        "rag",
+        "binary",
+        "structure",
+        "accuracy",
+        "output_tokens"
+      ],
       "items": [
         "Llama3-1-NI_unsloth_default",
         "Llama3-1-NI_unsloth_binary",
         "midrule",
-        "Llama3-1_unsloth_default",
-        "Llama3-1_unsloth_binary",
-        "midrule",
-        "Llama3-1_axelera_default",
-        "Llama3-1_axelera_binary"
+        "Llama3-1-fixed_unsloth_default",
+        "Llama3-1-fixed_unsloth_binary"
       ]
     },
     {
       "name": "llama-fix",
       "out": "llama-fix.tex",
-      "caption": "Comparison of Llama3.2-3B with the prompt fix.",
+      "caption": "Binary-output prompt ablation for Llama: default binary instruction vs strict single-line prefix constraint starting with \\\\texttt{Adhering to Human:}; results shown for Llama-3.1 8B and Llama-3.2 3B across retrieval settings.",
       "label": "tab:llama-fix",
       "env": "table",
       "columns": [
@@ -197,14 +223,16 @@
         "output_tokens"
       ],
       "items": [
+        "Llama3-1_unsloth_binary",
         "Llama3-2_unsloth_binary",
+        "Llama3-1-fixed_unsloth_binary",
         "Llama3-2-fixed_unsloth_binary"
       ]
     },
     {
       "name": "qwen_3b",
       "out": "qwen_3b.tex",
-      "caption": "Accuracy metrics for Qwen2.5-3B runs.",
+      "caption": "Qwen2.5-3B accuracy on GPU FP16 across retrieval settings, comparing explanatory vs binary output and the effect of SFT.",
       "label": "tab:qwen-3b-acc",
       "items": [
         "Qwen2-5-3B_unsloth_default",
@@ -218,7 +246,7 @@
     {
       "name": "qwen_all_binary",
       "out": "qwen_all_binary.tex",
-      "caption": "All Qwen runs with binary output enabled.",
+      "caption": "Qwen2.5 (base and SFT) in binary mode with early stopping across retrieval settings (GPU FP16).",
       "label": "tab:qwen-binary-acc",
       "items": [
         { "select": { "path_contains": ["qwen", "binary"] } }
