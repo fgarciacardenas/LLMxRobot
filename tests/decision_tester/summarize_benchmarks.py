@@ -255,40 +255,163 @@ def latex_escape(text: str) -> str:
 
 _MIDRULE: Dict[str, bool] = {"__midrule__": True}
 
+_LATEX_COLUMN_ALIASES: Dict[str, str] = {
+    "model": "model",
+    "model name": "model",
+    "model_params": "model_params",
+    "model params": "model_params",
+    "rag": "rag",
+    "rag type": "rag",
+    "device": "device",
+    "device used": "device",
+    "quant_scheme": "quant_scheme",
+    "quant scheme": "quant_scheme",
+    "quantization scheme": "quant_scheme",
+    "binary": "binary",
+    "binary output": "binary",
+    "structure": "structure",
+    "structure followed (%)": "structure",
+    "accuracy": "accuracy",
+    "accuracy (avg. | par.)": "accuracy",
+    "output_tokens": "output_tokens",
+    "output tokens": "output_tokens",
+    "output tokens (avg. | par.)": "output_tokens",
+}
 
-def format_latex_table(rows_or_markers: List[Dict], caption: str, label: str) -> str:
+_DEFAULT_LATEX_COLUMNS: List[str] = [
+    "model",
+    "model_params",
+    "rag",
+    "device",
+    "quant_scheme",
+    "binary",
+    "structure",
+    "accuracy",
+    "output_tokens",
+]
+
+
+def _normalize_latex_columns(columns: Optional[List[Any]]) -> List[str]:
+    if not columns:
+        return list(_DEFAULT_LATEX_COLUMNS)
+    if not isinstance(columns, list):
+        raise SystemExit("'columns' must be a list.")
+
+    normalized: List[str] = []
+    for col in columns:
+        if not isinstance(col, str):
+            raise SystemExit(f"Invalid column (must be string): {col!r}")
+        key = _LATEX_COLUMN_ALIASES.get(col.strip().lower())
+        if not key:
+            allowed = ", ".join(sorted(set(_LATEX_COLUMN_ALIASES.values())))
+            raise SystemExit(f"Unknown column '{col}'. Allowed: {allowed}")
+        normalized.append(key)
+
+    # de-dup while preserving order
+    seen = set()
+    deduped = []
+    for key in normalized:
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(key)
+    return deduped
+
+
+def _normalize_latex_env(env: Optional[Any]) -> str:
+    if not env:
+        return "sidewaystable"
+    if not isinstance(env, str):
+        raise SystemExit("'env' must be a string.")
+    env = env.strip()
+    if env not in {"table", "sidewaystable"}:
+        raise SystemExit("'env' must be either 'table' or 'sidewaystable'.")
+    return env
+
+
+def _latex_column_spec(columns: List[str]) -> str:
+    align = {
+        "model": "l",
+        "model_params": "c",
+        "rag": "c",
+        "device": "c",
+        "quant_scheme": "c",
+        "binary": "c",
+        "structure": "c",
+        "accuracy": "c",
+        "output_tokens": "c",
+    }
+    return "".join(align[c] for c in columns)
+
+
+def _latex_column_headers(columns: List[str]) -> List[str]:
+    headers = {
+        "model": r"\makecell{\textbf{Model}\\\textbf{name}}",
+        "model_params": r"\makecell{\textbf{Model}\\\textbf{Params}}",
+        "rag": r"\makecell{\textbf{RAG}\\\textbf{type}}",
+        "device": r"\makecell{\textbf{Device}\\\textbf{used}}",
+        "quant_scheme": r"\makecell{\textbf{Quant}\\\textbf{scheme}}",
+        "binary": r"\makecell{\textbf{Binary}\\\textbf{output}}",
+        "structure": r"\makecell{\textbf{Struct}\\\textbf{(\%)}}",
+        "accuracy": r"\makecell{\textbf{Accuracy}\\\textbf{(avg. | par.)}}",
+        "output_tokens": r"\makecell{\textbf{Tokens}\\\textbf{(avg. | par.)}}",
+    }
+    return [headers[c] for c in columns]
+
+
+def format_latex_table(
+    rows_or_markers: List[Dict],
+    caption: str,
+    label: str,
+    *,
+    columns: Optional[List[Any]] = None,
+    env: Optional[Any] = None,
+) -> str:
     """
-    Build a LaTeX sidewaystable with the key metrics.
+    Build a LaTeX (sideways)table with the key metrics.
     Uses Accuracy macro all (%) as the overall accuracy.
     """
+    columns_norm = _normalize_latex_columns(columns)
+    env_norm = _normalize_latex_env(env)
+
     rows = [r for r in rows_or_markers if not r.get("__midrule__")]
     if not rows:
         return "% No rows to render\n"
 
     # Precompute widths for padded "avg | parsed" cells to keep the '|' visually aligned
-    acc_left_w = max(len(f"{r['Accuracy macro all (%)']:.2f}") for r in rows)
-    acc_right_w = max(len(f"{r['Accuracy macro parsed (%)']:.2f}") for r in rows)
-    tok_left_w = max(len(f"{r['Output tokens']:.0f}") for r in rows)
-    tok_right_w = max(len(f"{r['Output tokens (filt)']:.0f}") for r in rows)
+    acc_left_w = (
+        max(len(f"{r['Accuracy macro all (%)']:.2f}") for r in rows)
+        if "accuracy" in columns_norm
+        else 0
+    )
+    acc_right_w = (
+        max(len(f"{r['Accuracy macro parsed (%)']:.2f}") for r in rows)
+        if "accuracy" in columns_norm
+        else 0
+    )
+    tok_left_w = (
+        max(len(f"{r['Output tokens']:.0f}") for r in rows)
+        if "output_tokens" in columns_norm
+        else 0
+    )
+    tok_right_w = (
+        max(len(f"{r['Output tokens (filt)']:.0f}") for r in rows)
+        if "output_tokens" in columns_norm
+        else 0
+    )
 
     lines = []
-    lines.append(r"\begin{sidewaystable}")
+    lines.append(rf"\begin{{{env_norm}}}")
     lines.append(r"  \centering")
     lines.append(r"  \setlength{\tabcolsep}{6pt}")
     lines.append(r"  \renewcommand{\arraystretch}{1.2}")
-    lines.append(r"  \begin{tabular}{lcccccccc}")
+    lines.append(rf"  \begin{{tabular}}{{{_latex_column_spec(columns_norm)}}}")
     lines.append(r"    \toprule")
-    lines.append(r"    \multicolumn{9}{c}{\cellcolor{ggufColor} \textbf{Accuracy metrics}} \\")
+    lines.append(
+        rf"    \multicolumn{{{len(columns_norm)}}}{{c}}{{\cellcolor{{ggufColor}} \textbf{{Accuracy metrics}}}} \\"
+    )
     lines.append(r"    \midrule")
-    lines.append(r"    \makecell{\textbf{Model}\\\textbf{name}} &")
-    lines.append(r"    \makecell{\textbf{Model}\\\textbf{Params}} &")
-    lines.append(r"    \makecell{\textbf{RAG}\\\textbf{type}} &")
-    lines.append(r"    \makecell{\textbf{Device}\\\textbf{used}} &")
-    lines.append(r"    \makecell{\textbf{Quant}\\\textbf{scheme}} &")
-    lines.append(r"    \makecell{\textbf{Binary}\\\textbf{output}} &")
-    lines.append(r"    \makecell{\textbf{Structure}\\\textbf{followed (\%)}} &")
-    lines.append(r"    \makecell{\textbf{Accuracy}\\\textbf{(avg. | parsed)}} &")
-    lines.append(r"    \makecell{\textbf{Output tokens}\\\textbf{(avg. | parsed)}} \\")
+    lines.append("    " + " & ".join(_latex_column_headers(columns_norm)) + r" \\")
     lines.append(r"    \midrule")
 
     for row in rows_or_markers:
@@ -298,46 +421,53 @@ def format_latex_table(rows_or_markers: List[Dict], caption: str, label: str) ->
 
         rag = row["RAG"]
         rag_tex = r"\xmark" if rag == "None" else latex_escape(rag)
-        quant_scheme = row.get("__Quant scheme") or (
-            "Q4.M"
-            if row["Device"] == "GGUF"
-            else "INT8"
-            if row["Device"] == "Axelera"
-            else "Quantized"
-            if row["Quantized"] == "Yes"
-            else "FP16"
+        quant_scheme = (
+            row.get("__Quant scheme")
+            or (
+                "Q4.M"
+                if row["Device"] == "GGUF"
+                else "INT8"
+                if row["Device"] == "Axelera"
+                else "Quantized"
+                if row["Quantized"] == "Yes"
+                else "FP16"
+            )
         )
 
         binary_tex = r"\cmark" if row["Binary"] == "Yes" else r"\xmark"
         structure = f"{row['Structure followed (%)']:.2f}\\%"
-        acc_l = f"{row['Accuracy macro all (%)']:.2f}"
-        acc_r = f"{row['Accuracy macro parsed (%)']:.2f}"
-        acc_pad_l = r"\hphantom{" + "0" * (acc_left_w - len(acc_l)) + "}"
-        acc_pad_r = r"\hphantom{" + "0" * (acc_right_w - len(acc_r)) + "}"
-        accuracy = f"{acc_pad_l}{acc_l} | {acc_r}{acc_pad_r}\\%"
+        accuracy = ""
+        if "accuracy" in columns_norm:
+            acc_l = f"{row['Accuracy macro all (%)']:.2f}"
+            acc_r = f"{row['Accuracy macro parsed (%)']:.2f}"
+            acc_pad_l = r"\hphantom{" + "0" * (acc_left_w - len(acc_l)) + "}"
+            acc_pad_r = r"\hphantom{" + "0" * (acc_right_w - len(acc_r)) + "}"
+            accuracy = f"{acc_pad_l}{acc_l} | {acc_r}{acc_pad_r}\\%"
 
-        tok_l = f"{row['Output tokens']:.0f}"
-        tok_r = f"{row['Output tokens (filt)']:.0f}"
-        tok_pad_l = r"\hphantom{" + "0" * (tok_left_w - len(tok_l)) + "}"
-        tok_pad_r = r"\hphantom{" + "0" * (tok_right_w - len(tok_r)) + "}"
-        out_tok = f"{tok_pad_l}{tok_l} | {tok_r}{tok_pad_r}"
+        out_tok = ""
+        if "output_tokens" in columns_norm:
+            tok_l = f"{row['Output tokens']:.0f}"
+            tok_r = f"{row['Output tokens (filt)']:.0f}"
+            tok_pad_l = r"\hphantom{" + "0" * (tok_left_w - len(tok_l)) + "}"
+            tok_pad_r = r"\hphantom{" + "0" * (tok_right_w - len(tok_r)) + "}"
+            out_tok = f"{tok_pad_l}{tok_l} | {tok_r}{tok_pad_r}"
         model_params = row.get("Model Params", "--")
+
+        cell_map = {
+            "model": latex_escape(str(row["Model"])),
+            "model_params": latex_escape(str(model_params)),
+            "rag": rag_tex,
+            "device": latex_escape(str(row["Device"])),
+            "quant_scheme": latex_escape(str(quant_scheme)),
+            "binary": binary_tex,
+            "structure": structure,
+            "accuracy": accuracy,
+            "output_tokens": out_tok,
+        }
 
         lines.append(
             "    "
-            + " & ".join(
-                [
-                    latex_escape(str(row["Model"])),
-                    latex_escape(str(model_params)),
-                    rag_tex,
-                    latex_escape(str(row["Device"])),
-                    latex_escape(quant_scheme),
-                    binary_tex,
-                    structure,
-                    accuracy,
-                    out_tok,
-                ]
-            )
+            + " & ".join(cell_map[c] for c in columns_norm)
             + r" \\"
         )
 
@@ -345,7 +475,7 @@ def format_latex_table(rows_or_markers: List[Dict], caption: str, label: str) ->
     lines.append(r"  \end{tabular}")
     lines.append(f"  \\caption{{{caption}}}")
     lines.append(f"  \\label{{{label}}}")
-    lines.append(r"\end{sidewaystable}")
+    lines.append(rf"\end{{{env_norm}}}")
     return "\n".join(lines) + "\n"
 
 
@@ -436,6 +566,8 @@ def generate_tables_from_config(config_path: Path) -> None:
     Top-level keys:
       - logs_root: base folder to scan (default: logs/report_logs)
       - out_dir: base output folder (default: .)
+      - default_env: "table" or "sidewaystable" (default: "sidewaystable")
+      - default_columns: list of column ids/aliases (default: all)
       - tables: list of table specs
 
     Table spec keys:
@@ -443,6 +575,8 @@ def generate_tables_from_config(config_path: Path) -> None:
       - out: output file path (required; relative to out_dir unless absolute)
       - caption: LaTeX caption (optional)
       - label: LaTeX label (optional)
+      - env: "table" or "sidewaystable" (optional)
+      - columns: list of column ids/aliases (optional)
       - items: ordered list; each item is one of:
           - "midrule" or {"midrule": true}
           - "<folder_name>" (treated as {"parent": "<folder_name>"})
@@ -452,6 +586,8 @@ def generate_tables_from_config(config_path: Path) -> None:
     cfg = json.loads(config_path.read_text())
     logs_root = Path(cfg.get("logs_root", "logs/report_logs"))
     out_dir = Path(cfg.get("out_dir", "."))
+    default_env = cfg.get("default_env", "sidewaystable")
+    default_columns = cfg.get("default_columns", None)
     tables = cfg.get("tables", [])
     if not isinstance(tables, list) or not tables:
         raise SystemExit("Config must contain a non-empty 'tables' list.")
@@ -473,6 +609,8 @@ def generate_tables_from_config(config_path: Path) -> None:
 
         caption = table.get("caption", "Accuracy metrics summary")
         label = table.get("label", f"tab:{name}")
+        env = table.get("env", default_env)
+        columns = table.get("columns", default_columns)
 
         items = table.get("items", [])
         if not isinstance(items, list) or not items:
@@ -501,7 +639,7 @@ def generate_tables_from_config(config_path: Path) -> None:
         if rendered and rendered[-1].get("__midrule__"):
             rendered.pop()
 
-        latex = format_latex_table(rendered, caption=caption, label=label)
+        latex = format_latex_table(rendered, caption=caption, label=label, columns=columns, env=env)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(latex)
         print(f"Wrote LaTeX table '{name}' to {out_path}")

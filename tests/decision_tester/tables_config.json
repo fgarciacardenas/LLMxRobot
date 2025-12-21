@@ -1,12 +1,34 @@
 {
   "logs_root": "src/LLMxRobot/tests/decision_tester/logs/report_logs",
   "out_dir": "tables",
+  "default_env": "sidewaystable",
+  "default_columns": [
+    "model",
+    "model_params",
+    "rag",
+    "device",
+    "quant_scheme",
+    "binary",
+    "structure",
+    "accuracy",
+    "output_tokens"
+  ],
   "tables": [
     {
       "name": "onboard",
       "out": "onboard.tex",
       "caption": "Comparison of evaluated models for different RAG configurations.",
       "label": "tab:onboard",
+      "env": "table",
+      "columns": [
+        "model",
+        "model_params",
+        "rag",
+        "binary",
+        "structure",
+        "accuracy",
+        "output_tokens"
+      ],
       "items": [
         "Llama3-1_unsloth_default",
         "midrule",
@@ -24,6 +46,16 @@
       "out": "binary.tex",
       "caption": "Comparison of evaluated models with binary output format.",
       "label": "tab:binary",
+      "env": "table",
+      "columns": [
+        "model",
+        "model_params",
+        "rag",
+        "binary",
+        "structure",
+        "accuracy",
+        "output_tokens"
+      ],
       "items": [
         "Llama3-2_unsloth_default",
         "Llama3-2_unsloth_binary",
@@ -147,6 +179,26 @@
         "midrule",
         "Llama3-1_axelera_default",
         "Llama3-1_axelera_binary"
+      ]
+    },
+    {
+      "name": "llama-fix",
+      "out": "llama-fix.tex",
+      "caption": "Comparison of Llama3.2-3B with the prompt fix.",
+      "label": "tab:llama-fix",
+      "env": "table",
+      "columns": [
+        "model",
+        "model_params",
+        "rag",
+        "binary",
+        "structure",
+        "accuracy",
+        "output_tokens"
+      ],
+      "items": [
+        "Llama3-2_unsloth_binary",
+        "Llama3-2-fixed_unsloth_binary"
       ]
     },
     {
