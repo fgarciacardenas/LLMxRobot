@@ -24,6 +24,8 @@ Notes:
 - Keeps prompts as-is; you may post-process if you want the shorter
   binary-only prompt. For now, we reuse source prompts to stay faithful to
   the training distribution.
+- If present in the source, appends the model's reasoning/explanation after
+  the `Adhering to Human: ...` line.
 """
 
 from __future__ import annotations
@@ -38,6 +40,42 @@ from typing import List, Dict, Any
 # Accept "Action: a)" or "Action: a" (same for b)
 ACTION_TRUE_RE = re.compile(r"Action:\s*a\)?\b", re.IGNORECASE)
 ACTION_FALSE_RE = re.compile(r"Action:\s*b\)?\b", re.IGNORECASE)
+ACTION_SPLIT_RE = re.compile(r"\bAction\s*:\s*", re.IGNORECASE)
+ADHERING_LINE_RE = re.compile(
+    r"(?im)^\s*adhering\s*to\s*human\s*:\s*(true|false)\s*$"
+)
+
+
+def extract_reasoning(raw: str) -> str:
+    """
+    Extract the "reasoning" portion from a model response.
+
+    - For action-labeled responses, drop the trailing `Action: ...` block.
+    - Drop any standalone `Adhering to Human: ...` line so we can append the
+      remaining reasoning after our normalized label.
+    """
+    if not raw:
+        return ""
+
+    text = raw.strip()
+    if not text:
+        return ""
+
+    # Drop action + everything after it (common in randomized_decision_making)
+    m = ACTION_SPLIT_RE.search(text)
+    if m:
+        text = text[: m.start()].rstrip()
+
+    # Drop standalone adherence lines
+    text = ADHERING_LINE_RE.sub("", text).strip()
+    return text
+
+
+def format_binary_answer(label: bool, reasoning: str) -> str:
+    out = f"Adhering to Human: {'True' if label else 'False'}"
+    if reasoning:
+        out += f"\n\n{reasoning}"
+    return out
 
 
 def load_decision_json(path: Path) -> List[Dict[str, Any]]:
@@ -58,10 +96,11 @@ def load_decision_json(path: Path) -> List[Dict[str, Any]]:
             label = False
         if label is None:
             continue
+        reasoning = extract_reasoning(assistant)
         out.append({
             "conversations": [
                 {"from": "human", "value": user},
-                {"from": "gpt", "value": f"Adhering to Human: {'True' if label else 'False'}"}
+                {"from": "gpt", "value": format_binary_answer(label, reasoning)}
             ]
         })
     return out
@@ -84,10 +123,17 @@ def load_log_json(path: Path) -> List[Dict[str, Any]]:
             label = rec.get("expected_output")
             if prompt is None or not isinstance(label, bool):
                 continue
+            raw_response = None
+            for key in ("model_response_raw", "model_response", "response", "completion", "output"):
+                val = rec.get(key)
+                if isinstance(val, str) and val.strip():
+                    raw_response = val
+                    break
+            reasoning = extract_reasoning(raw_response or "")
             out.append({
                 "conversations": [
                     {"from": "human", "value": prompt},
-                    {"from": "gpt", "value": f"Adhering to Human: {'True' if label else 'False'}"}
+                    {"from": "gpt", "value": format_binary_answer(label, reasoning)}
                 ]
             })
     return out
