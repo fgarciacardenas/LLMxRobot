@@ -93,16 +93,15 @@
     {
       "name": "axelera",
       "out": "axelera.tex",
-      "caption": "GPU FP16 vs Axelera Metis INT8 accuracy for Phi-3 and Llama-3.2 across retrieval settings and output modes (explanatory vs binary).",
+      "caption": "Axelera Metis INT8 accuracy for Phi-3, Llama-3.1, and Llama-3.2 across retrieval settings and output modes (explanatory vs binary).",
       "label": "tab:axelera",
       "items": [
-        "Llama3-2_unsloth_default",
-        "Llama3-2_unsloth_binary",
+        "Llama3-1_axelera_default",
+        "Llama3-1_axelera_binary",
+        "midrule",
         "Llama3-2_axelera_default",
         "Llama3-2_axelera_binary",
         "midrule",
-        "Phi3_unsloth_default",
-        "Phi3_unsloth_binary",
         "Phi3_axelera_default",
         "Phi3_axelera_binary"
       ]
