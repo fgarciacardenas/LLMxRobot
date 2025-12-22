@@ -327,7 +327,7 @@ def evaluate_model(model, tokenizer,
         local=True,
         use_rag=use_rag,
         quant=False,
-        OPENAI_API_TOKEN=OPENAI_API_TOKEN,
+        openai_api_token=OPENAI_API_TOKEN,
     )
     
     llm = RaceLLMPipeline(model_dir=None, model=model, tokenizer=tokenizer, chat_template=chat_template)

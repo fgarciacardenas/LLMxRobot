@@ -64,6 +64,24 @@ In our [CoRL 2025 paper](https://arxiv.org/abs/2505.03238), **RobotxR1: Enabling
 
 3. Attach via terminal or VS Code.
 
+---
+
+## 🔋 Jetson power profiling (tegrastats)
+
+Jetson does not provide true per-process (per-PID) power attribution. The most practical approach is to log the relevant power rails with `tegrastats` while your workload runs, then optionally subtract an idle baseline to estimate the workload’s incremental energy.
+
+From the **host** (Jetson), with the container already running:
+```bash
+cd /path/to/RISCVxLLMxRobot
+./scripts/profile_jetson_power.sh --container embodiedai_dock --baseline-s 10 --interval-ms 200
+```
+
+This writes logs to `src/LLMxRobot/logs/power_profiles/` and prints energy summaries for `VIN_SYS_5V0`, `VDD_GPU_SOC`, and `VDD_CPU_CV`.
+
+If your container mounts `src/LLMxRobot` directly at `/embodiedai` (the default in `.docker_utils/main_dock.sh`), the script auto-detects the correct workdir; otherwise pass `--workdir <path-in-container>`.
+
+Stop the profiling at any time with `Ctrl-C` (it terminates the container workload and stops `tegrastats`).
+
 ### Create .env File
 Create a `.env` file in the root directory with the following content:
 ```bash

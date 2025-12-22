@@ -16,8 +16,8 @@ ADHERING_ANY_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGN
 class DecisionTester:
     def __init__(
         self,
-        llm,
-        model_name,
+        llm=None,
+        model_name=None,
         all_tests=False,
         mini=False,
         local=True,
@@ -30,8 +30,27 @@ class DecisionTester:
         rag_score_threshold=0.0,
         rag_fetch_k=5,
         binary_output=False,
+        openai_api_token=None,
+        **kwargs,
     ):
+        # Backwards-compatible aliasing for older call sites.
+        if openai_api_token is None:
+            openai_api_token = kwargs.pop("OPENAI_API_TOKEN", None)
+        else:
+            kwargs.pop("OPENAI_API_TOKEN", None)
+        if kwargs:
+            unexpected = ", ".join(sorted(kwargs.keys()))
+            raise TypeError(f"DecisionTester.__init__() got unexpected keyword argument(s): {unexpected}")
+
+        self.openai_api_token = (
+            openai_api_token
+            or os.getenv("OPENAI_API_TOKEN")
+            or os.getenv("OPENAI_API_KEY")
+        )
+
         self.llm = llm
+        if model_name is None:
+            raise TypeError("DecisionTester.__init__() missing required argument: 'model_name'")
         self.model_name = model_name.replace("/", "_")
         self.all_tests = all_tests
         self.mini_eval = mini
@@ -52,6 +71,11 @@ class DecisionTester:
             if self.rag_offline:
                 self._init_rag_offline()
             else:
+                if not self.openai_api_token:
+                    raise ValueError(
+                        "RAG (online) requires an OpenAI token; set `OPENAI_API_TOKEN`/`OPENAI_API_KEY` "
+                        "or pass `openai_api_token=` to DecisionTester()."
+                    )
                 # Get Memories for the RAG
                 memories_dir = 'prompts/RAG_memory.txt'
                 print(f'Loading memories from {memories_dir}...')
@@ -62,7 +86,7 @@ class DecisionTester:
                     separator='#', keep_separator=False, chunk_overlap=20, chunk_size=100
                 )
                 self.index = VectorstoreIndexCreator(
-                    embedding=OpenAIEmbeddings(api_key=OPENAI_API_TOKEN),
+                    embedding=OpenAIEmbeddings(api_key=self.openai_api_token),
                     text_splitter=self.splitter
                 ).from_loaders([memories_loader])
 
@@ -390,6 +414,11 @@ class DecisionTester:
         return None
 
     def eval_decision_making(self, data_dir, llm, data_name):
+        effective_llm = llm or self.llm
+        if effective_llm is None:
+            raise ValueError("No LLM provided: pass `llm=` to eval_decision_making() or `llm=` to DecisionTester().")
+        self.llm = effective_llm
+
         # Load dataset
         print(f" Evaluating decision making on {data_name}")
         data_set = self.load_dataset(data_dir)
@@ -438,7 +467,8 @@ class DecisionTester:
 
                 # Get the model's response
                 if self.local_inference:
-                    llm_response, _, _ = self.llm(prompt)
+                    result = self.llm(prompt)
+                    llm_response = result[0] if isinstance(result, (tuple, list)) else result
                 else:
                     # prompt = " ".join(prompt.split())
                     llm_response = self.llm.invoke(prompt).content
