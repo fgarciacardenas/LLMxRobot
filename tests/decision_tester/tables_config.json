@@ -97,10 +97,10 @@
       "label": "tab:axelera",
       "items": [
         "Llama3-1_axelera_default",
-        "Llama3-1_axelera_binary",
+        "Llama3-1-fixed_axelera_binary",
         "midrule",
         "Llama3-2_axelera_default",
-        "Llama3-2_axelera_binary",
+        "Llama3-2-fixed_axelera_binary",
         "midrule",
         "Phi3_axelera_default",
         "Phi3_axelera_binary"

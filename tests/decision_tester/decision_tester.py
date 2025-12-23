@@ -18,6 +18,7 @@ class DecisionTester:
         self,
         llm=None,
         model_name=None,
+        tokenizer=None,
         all_tests=False,
         mini=False,
         local=True,
@@ -91,7 +92,7 @@ class DecisionTester:
                 ).from_loaders([memories_loader])
 
         # Tokenizer online stats
-        self.tokenizer = get_tokenizer(self.model_name)
+        self.tokenizer = tokenizer or get_tokenizer(self.model_name)
         self.prompt_stats_overall = RunningStats()
         self.rag_stats_overall    = RunningStats()
         self.output_stats_overall = RunningStats()
@@ -756,46 +757,57 @@ if __name__ == '__main__':
                 llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template, binary_output=args.binary_output) # , max_seq_length=2048, max_new_tokes=2048
             print(f"Using model {args.model} from {model_dir}")
 
-    # Evaluate the decision making on all datasets
-    if args.dataset == 'all':
-        evaluator = DecisionTester(
-            llm=llm,
-            model_name=model_name,
-            all_tests=True,
-            mini=args.mini,
-            local=local,
-            use_rag=args.rag,
-            quant=args.quant,
-            rag_offline=args.rag_offline,
-            rag_index=args.rag_index,
-            rag_corpus=args.rag_corpus,
-            rag_max_hits=args.rag_max_hits,
-            rag_score_threshold=args.rag_threshold,
-            rag_fetch_k=args.rag_fetch_k,
-            binary_output=args.binary_output,
-        )
-        for i, dataset in enumerate(possible_datasets):
-            data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
+    def _safe_close(obj):
+        try:
+            close_fn = getattr(obj, "close", None)
+            if callable(close_fn):
+                close_fn()
+        except Exception:
+            pass
+
+    try:
+        # Evaluate the decision making on all datasets
+        if args.dataset == 'all':
+            evaluator = DecisionTester(
+                llm=llm,
+                model_name=model_name,
+                all_tests=True,
+                mini=args.mini,
+                local=local,
+                use_rag=args.rag,
+                quant=args.quant,
+                rag_offline=args.rag_offline,
+                rag_index=args.rag_index,
+                rag_corpus=args.rag_corpus,
+                rag_max_hits=args.rag_max_hits,
+                rag_score_threshold=args.rag_threshold,
+                rag_fetch_k=args.rag_fetch_k,
+                binary_output=args.binary_output,
+            )
+            for i, dataset in enumerate(possible_datasets):
+                data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
+                # Evaluate the decision making
+                evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=dataset)
+        # Only evaluate on a specific dataset
+        else:
+            evaluator = DecisionTester(
+                llm=llm,
+                model_name=args.model,
+                all_tests=False,
+                mini=args.mini,
+                local=local,
+                use_rag=args.rag,
+                quant=args.quant,
+                rag_offline=args.rag_offline,
+                rag_index=args.rag_index,
+                rag_corpus=args.rag_corpus,
+                rag_max_hits=args.rag_max_hits,
+                rag_score_threshold=args.rag_threshold,
+                rag_fetch_k=args.rag_fetch_k,
+                binary_output=args.binary_output,
+            )
+            data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
             # Evaluate the decision making
-            evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=dataset)
-    # Only evaluate on a specific dataset
-    else:
-        evaluator = DecisionTester(
-            llm=llm,
-            model_name=args.model,
-            all_tests=False,
-            mini=args.mini,
-            local=local,
-            use_rag=args.rag,
-            quant=args.quant,
-            rag_offline=args.rag_offline,
-            rag_index=args.rag_index,
-            rag_corpus=args.rag_corpus,
-            rag_max_hits=args.rag_max_hits,
-            rag_score_threshold=args.rag_threshold,
-            rag_fetch_k=args.rag_fetch_k,
-            binary_output=args.binary_output,
-        )
-        data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
-        # Evaluate the decision making
-        evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
+            evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
+    finally:
+        _safe_close(llm)

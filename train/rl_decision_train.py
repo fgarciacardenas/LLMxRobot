@@ -253,7 +253,15 @@ def train(cfg):
         )
         
         # Add custom callbacks if enabled
-        eval_fn = partial(evaluate_model, use_rag=use_rag, chat_template=chat_template, max_step=cfg["grpo"]["max_steps"])
+        eval_use_rag = cfg.get("evaluation", {}).get("use_rag", use_rag)
+        eval_robot_states_dir = cfg.get("evaluation", {}).get("robot_states_dir", None)
+        eval_fn = partial(
+            evaluate_model,
+            use_rag=eval_use_rag,
+            chat_template=chat_template,
+            max_step=cfg["grpo"]["max_steps"],
+            robot_states_dir=eval_robot_states_dir,
+        )
         assert cfg["grpo"]["max_steps"] % cfg["evaluation"]["eval_interval_steps"] == 0, "max_steps must be divisible by eval_interval_steps"
 
         callbacks = [
@@ -314,14 +322,22 @@ def train(cfg):
     
     return model, tokenizer
 
-def evaluate_model(model, tokenizer,
-                   use_rag=True, chat_template="qwen-2.5", max_step=1e3, step=0):
+def evaluate_model(
+    model,
+    tokenizer,
+    use_rag=True,
+    chat_template="qwen-2.5",
+    max_step=1e3,
+    step=0,
+    robot_states_dir=None,
+):
     
     print("Evaluating on full dataset.")
     mini = False
     
     evaluator = DecisionTester(
         model_name="GRPO_Training",
+        tokenizer=tokenizer,
         all_tests=True,
         mini=mini, # full if it is the final step
         local=True,
@@ -332,7 +348,14 @@ def evaluate_model(model, tokenizer,
     
     llm = RaceLLMPipeline(model_dir=None, model=model, tokenizer=tokenizer, chat_template=chat_template)
     
-    base_data_dir = "/embodiedai/tests/decision_tester/robot_states"
+    base_data_dir = robot_states_dir or "/embodiedai/tests/decision_tester/robot_states"
+    if not os.path.isdir(base_data_dir):
+        print(
+            f"[EvalCallback] Skipping evaluation: robot_states_dir not found: {base_data_dir}. "
+            "Set `evaluation.robot_states_dir` in the config to a valid directory."
+        )
+        return {}
+
     possible_datasets = [filename for filename in os.listdir(base_data_dir) if filename.endswith(".json")]
     
     all_results = {}
