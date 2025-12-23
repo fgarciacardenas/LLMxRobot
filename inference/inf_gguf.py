@@ -40,6 +40,30 @@ class RaceLLMGGGUF:
         out_tokens = output['usage']['completion_tokens']
         return out_text, input_tokens, out_tokens
 
+    def close(self):
+        llm = getattr(self, "llm", None)
+        if llm is None:
+            return
+        try:
+            close_fn = getattr(llm, "close", None)
+            if callable(close_fn):
+                close_fn()
+        finally:
+            self.llm = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+
     def _normalize_chat_format(self, chat_format: str) -> str:
         """
         Map higher-level template names to llama.cpp registered handlers.
