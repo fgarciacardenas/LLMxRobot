@@ -82,6 +82,16 @@ If your container mounts `src/LLMxRobot` directly at `/embodiedai` (the default 
 
 Stop the profiling at any time with `Ctrl-C` (it terminates the container workload and stops `tegrastats`).
 
+### LLM-only energy (exclude prompt/RAG/metrics)
+
+To approximate energy spent *only during GGUF decoding*, enable LLM event markers and integrate power only over those decode windows:
+```bash
+cd /path/to/RISCVxLLMxRobot
+./scripts/profile_jetson_power.sh --container embodiedai_dock --baseline-s 30 --interval-ms 100 --segment-llm
+```
+
+This prints an extra “LLM-only segment summary” and writes per-call energies to `src/LLMxRobot/logs/power_profiles/llm_segments_*.csv`.
+
 ### Create .env File
 Create a `.env` file in the root directory with the following content:
 ```bash
