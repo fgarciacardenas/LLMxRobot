@@ -29,20 +29,51 @@ class RaceLLMGGGUF:
         """
         if os.getenv("LLMXROBOT_PROFILE_LLM", "").strip().lower() not in ("1", "true", "yes", "on"):
             return
-        payload = {
-            "event": event,
-            "t_epoch_s": time.time(),
-            "t_perf_s": time.perf_counter(),
-            "ts": datetime.datetime.now().isoformat(timespec="milliseconds"),
-            **fields,
-        }
-        print("LLMXROBOT_EVENT " + json.dumps(payload, sort_keys=True), flush=True)
+        def _jsonable(v):
+            if v is None or isinstance(v, (str, int, float, bool)):
+                return v
+            if isinstance(v, (list, tuple)):
+                return [_jsonable(x) for x in v]
+            if isinstance(v, dict):
+                return {str(k): _jsonable(val) for k, val in v.items()}
+            if callable(v):
+                try:
+                    return _jsonable(v())
+                except Exception:
+                    return str(v)
+            # Best-effort fallbacks for common types
+            try:
+                import numpy as np  # type: ignore
+                if isinstance(v, np.generic):
+                    return v.item()
+            except Exception:
+                pass
+            return str(v)
+
+        try:
+            payload = {
+                "event": event,
+                "t_epoch_s": time.time(),
+                "t_perf_s": time.perf_counter(),
+                "ts": datetime.datetime.now().isoformat(timespec="milliseconds"),
+                **{k: _jsonable(v) for k, v in fields.items()},
+            }
+            print("LLMXROBOT_EVENT " + json.dumps(payload, sort_keys=True), flush=True)
+        except Exception:
+            # Never let profiling markers crash the actual run.
+            return
 
     def __call__(self, input_text):
+        n_ctx = getattr(self.llm, "n_ctx", None)
+        if callable(n_ctx):
+            try:
+                n_ctx = n_ctx()
+            except Exception:
+                n_ctx = None
         self._emit_event(
             "llm_decode_start",
             model_path=self.path,
-            n_ctx=getattr(self.llm, "n_ctx", None),
+            n_ctx=n_ctx,
             max_tokens=self.max_tokens,
             prompt_chars=len(input_text) if input_text is not None else None,
         )
