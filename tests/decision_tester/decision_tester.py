@@ -55,6 +55,8 @@ class DecisionTester:
         self.model_name = model_name.replace("/", "_")
         self.all_tests = all_tests
         self.mini_eval = mini
+        # Used in log naming for non-all_tests runs as well.
+        self.full_or_mini = "mini" if self.mini_eval else "full"
         self.local_inference = local
         self.use_rag = use_rag
         self.quant = quant
@@ -102,7 +104,6 @@ class DecisionTester:
 
         # Ensure the logs directory exists
         if all_tests:
-            self.full_or_mini = "full" if not self.mini_eval else "mini"
             self.logs_dir = f"tests/decision_tester/logs/{self.model_name}_{self.full_or_mini}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
         else:
             self.logs_dir = "tests/decision_tester/logs/"

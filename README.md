@@ -92,6 +92,16 @@ cd /path/to/RISCVxLLMxRobot
 
 This prints an extra “LLM-only segment summary” and writes per-call energies to `src/LLMxRobot/logs/power_profiles/llm_segments_*.csv`.
 
+If `Ctrl-C` still feels “stuck”, the profiler now force-kills lingering `docker exec`/`tegrastats` processes after a short timeout (tunable via `--kill-timeout-s`).
+
+To re-analyze logs after the fact:
+- Whole-run rail summary: `python3 scripts/summarize_tegrastats.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV`
+- LLM-only per-call CSV: `python3 scripts/summarize_tegrastats_segments.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --run-log src/LLMxRobot/logs/power_profiles/workload_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV --out-csv out.csv`
+
+To do a quick sanity run (instead of hours-long `--dataset all`), run a smaller evaluation:
+- Prefer `--mini` (subsampled) and/or a single `--dataset <name>` in `tests.decision_tester.decision_tester`.
+- You can also pass a shorter command to the profiler via `--cmd`, e.g. `--cmd "python3 -m tests.decision_tester.decision_tester --model models/microsoft_Phi-3-mini-4k-instruct-gguf --dataset centerline --quant --mini"`.
+
 ### Create .env File
 Create a `.env` file in the root directory with the following content:
 ```bash
