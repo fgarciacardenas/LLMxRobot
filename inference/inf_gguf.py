@@ -1,6 +1,9 @@
 from llama_cpp import Llama
 import os
 import re
+import json
+import time
+import datetime
 
 ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
@@ -19,7 +22,30 @@ class RaceLLMGGGUF:
             verbose=False
             )
 
+    def _emit_event(self, event: str, **fields):
+        """
+        Emit a machine-parsable marker line to stdout when enabled.
+        Used to align external power logs (tegrastats) with LLM decode windows.
+        """
+        if os.getenv("LLMXROBOT_PROFILE_LLM", "").strip().lower() not in ("1", "true", "yes", "on"):
+            return
+        payload = {
+            "event": event,
+            "t_epoch_s": time.time(),
+            "t_perf_s": time.perf_counter(),
+            "ts": datetime.datetime.now().isoformat(timespec="milliseconds"),
+            **fields,
+        }
+        print("LLMXROBOT_EVENT " + json.dumps(payload, sort_keys=True), flush=True)
+
     def __call__(self, input_text):
+        self._emit_event(
+            "llm_decode_start",
+            model_path=self.path,
+            n_ctx=getattr(self.llm, "n_ctx", None),
+            max_tokens=self.max_tokens,
+            prompt_chars=len(input_text) if input_text is not None else None,
+        )
         output = self.llm.create_chat_completion(
             messages=[{
                      "role": "user",
@@ -38,6 +64,11 @@ class RaceLLMGGGUF:
                 out_text = out_text[:m.end()]
         input_tokens = output['usage']['prompt_tokens']
         out_tokens = output['usage']['completion_tokens']
+        self._emit_event(
+            "llm_decode_end",
+            prompt_tokens=input_tokens,
+            completion_tokens=out_tokens,
+        )
         return out_text, input_tokens, out_tokens
 
     def close(self):
