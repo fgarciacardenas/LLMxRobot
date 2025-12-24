@@ -21,9 +21,9 @@ Usage:
 
 Notes:
 - Skips samples without a clear binary label.
-- Keeps prompts as-is; you may post-process if you want the shorter
-  binary-only prompt. For now, we reuse source prompts to stay faithful to
-  the training distribution.
+- By default, normalizes source prompts that use the old `Action: a/b`
+  format into the binary `True/False` prompt format (use `--keep-prompts`
+  to preserve the original prompts).
 - If present in the source, appends the model's reasoning/explanation after
   the `Adhering to Human: ...` line.
 """
@@ -44,6 +44,70 @@ ACTION_SPLIT_RE = re.compile(r"\bAction\s*:\s*", re.IGNORECASE)
 ADHERING_LINE_RE = re.compile(
     r"(?im)^\s*adhering\s*to\s*human\s*:\s*(true|false)\s*$"
 )
+
+PROMPT_TWO_ACTIONS_RE = re.compile(r"(?i)(by choosing from the two)\s+actions\s*:")
+PROMPT_OPTION_A_RE = re.compile(r"(?im)^(?P<indent>[ \t]*)a\)\s*Continue\s*:.*$")
+PROMPT_OPTION_B_RE = re.compile(r"(?im)^(?P<indent>[ \t]*)b\)\s*Correct\s*:.*$")
+PROMPT_STRICT_BLOCK_RE = re.compile(
+    r"(?is)\n(?P<indent>[ \t]*)Strictly adhere to the reply format:\s*\n.*$"
+)
+
+
+def normalize_binary_prompt(prompt: str) -> str:
+    """
+    Normalize prompts from the old action format:
+      - "two actions" / Continue-Correct / Action: <a or b>
+    to the new binary prompt format:
+      - "two possibilities" / True-False / Adhering to Human: <True or False>
+    """
+    if not isinstance(prompt, str) or not prompt:
+        return prompt
+
+    if re.search(r"(?i)Adhering to Human\s*:\s*<True or False>", prompt):
+        return prompt
+
+    lower = prompt.lower()
+    looks_old = (
+        "two actions" in lower
+        or "action: <a or b>" in lower
+        or "a) continue:" in lower
+        or "b) correct:" in lower
+    )
+    if not looks_old:
+        return prompt
+
+    out = prompt
+    out = PROMPT_TWO_ACTIONS_RE.sub(r"\1 possibilities:", out)
+
+    def repl_a(m: re.Match) -> str:
+        indent = m.group("indent") or ""
+        return (
+            f"{indent}a) True: The car is driving as expected and should continue "
+            f"driving in the same manner."
+        )
+
+    def repl_b(m: re.Match) -> str:
+        indent = m.group("indent") or ""
+        return (
+            f"{indent}b) False: The car is not driving as expected and state how "
+            f"the car should correct its driving style."
+        )
+
+    out = PROMPT_OPTION_A_RE.sub(repl_a, out)
+    out = PROMPT_OPTION_B_RE.sub(repl_b, out)
+
+    m = PROMPT_STRICT_BLOCK_RE.search(out)
+    if m:
+        indent = m.group("indent") or ""
+        out = (
+            out[: m.start()]
+            + "\n"
+            + f"{indent}Strictly adhere to the reply format:\n\n"
+            + f"{indent}Adhering to Human: <True or False>\n"
+            + f"{indent}State Recap: <Brief Explanation>\n\n"
+        )
+
+    return out
 
 
 def extract_reasoning(raw: str) -> str:
@@ -78,7 +142,7 @@ def format_binary_answer(label: bool, reasoning: str) -> str:
     return out
 
 
-def load_decision_json(path: Path) -> List[Dict[str, Any]]:
+def load_decision_json(path: Path, *, keep_prompts: bool) -> List[Dict[str, Any]]:
     data = json.loads(path.read_text())
     out = []
     for entry in data:
@@ -89,6 +153,8 @@ def load_decision_json(path: Path) -> List[Dict[str, Any]]:
         assistant = conv[1].get("value") or conv[1].get("content") or ""
         if user is None:
             continue
+        if not keep_prompts:
+            user = normalize_binary_prompt(user)
         label = None
         if ACTION_TRUE_RE.search(assistant):
             label = True
@@ -106,7 +172,7 @@ def load_decision_json(path: Path) -> List[Dict[str, Any]]:
     return out
 
 
-def load_log_json(path: Path) -> List[Dict[str, Any]]:
+def load_log_json(path: Path, *, keep_prompts: bool) -> List[Dict[str, Any]]:
     out = []
     with path.open() as f:
         for line in f:
@@ -123,6 +189,8 @@ def load_log_json(path: Path) -> List[Dict[str, Any]]:
             label = rec.get("expected_output")
             if prompt is None or not isinstance(label, bool):
                 continue
+            if not keep_prompts:
+                prompt = normalize_binary_prompt(prompt)
             raw_response = None
             for key in ("model_response_raw", "model_response", "response", "completion", "output"):
                 val = rec.get(key)
@@ -147,6 +215,8 @@ def main():
                         help="Path to randomized decision making JSON")
     parser.add_argument("--logs", type=str, nargs="*", default=[],
                         help="Glob(s) for decision tester *_samples.json logs")
+    parser.add_argument("--keep-prompts", action="store_true",
+                        help="Keep source prompts as-is (do not normalize old Action a/b prompts to True/False)")
     args = parser.parse_args()
 
     out_path = Path(args.out)
@@ -158,7 +228,7 @@ def main():
     decision_path = Path(args.decision_json)
     if decision_path.exists():
         print(f"Loading decision data from {decision_path}")
-        samples.extend(load_decision_json(decision_path))
+        samples.extend(load_decision_json(decision_path, keep_prompts=args.keep_prompts))
     else:
         print(f"WARN: {decision_path} not found, skipping")
 
@@ -167,7 +237,7 @@ def main():
         for p in Path().glob(pattern):
             if p.is_file():
                 print(f"Loading log entries from {p}")
-                samples.extend(load_log_json(p))
+                samples.extend(load_log_json(p, keep_prompts=args.keep_prompts))
 
     print(f"Collected {len(samples)} samples")
     out_path.write_text(json.dumps(samples, indent=2))
