@@ -7,10 +7,11 @@ training:
   seed: 3407
   create_merged_model: true
 
+# === Model and Tokenizer ===
 model:
-  base_model: "nibauman/RobotxLLM_Qwen7B_SFT"
+  base_model: "unsloth/Phi-3-mini-4k-instruct"
   load_in_4bit: true
-  max_seq_length: 1024
+  max_seq_length: 2048
   lora_alpha: 16
   lora_rank: 16
   target_modules:
@@ -24,6 +25,7 @@ model:
   lora_dropout: 0
   use_gradient_checkpointing: "unsloth"
 
+# === Trainer Arguments ===
 trainer:
   max_steps: 150
   per_device_train_batch_size: 2
@@ -35,6 +37,7 @@ trainer:
   optim: "adamw_8bit"
   lr_scheduler_type: "linear"
 
+# === Tokens ===
 tokens:
   huggingfacehub: "${HUGGINGFACEHUB_API_TOKEN}"
   wandb: "${WANDB_API_KEY}"
