@@ -94,6 +94,8 @@ This prints an extra “LLM-only segment summary” and writes per-call energies
 
 If `Ctrl-C` still feels “stuck”, the profiler now force-kills lingering `docker exec`/`tegrastats` processes after a short timeout (tunable via `--kill-timeout-s`).
 
+On some Jetson builds, `llama-cpp-python` can abort during Python interpreter shutdown (after the script “finishes”). In `--segment-llm` mode the profiler automatically sets `LLMXROBOT_HARD_EXIT=1` to avoid that; you can disable it by passing `--env LLMXROBOT_HARD_EXIT=0`.
+
 To re-analyze logs after the fact:
 - Whole-run rail summary: `python3 scripts/summarize_tegrastats.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV`
 - LLM-only per-call CSV: `python3 scripts/summarize_tegrastats_segments.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --run-log src/LLMxRobot/logs/power_profiles/workload_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV --out-csv out.csv`

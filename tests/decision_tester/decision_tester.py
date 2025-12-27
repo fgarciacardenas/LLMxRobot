@@ -812,3 +812,14 @@ if __name__ == '__main__':
             evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
     finally:
         _safe_close(llm)
+        # Workaround for some Jetson/llama-cpp builds crashing during interpreter shutdown
+        # (e.g., "corrupted size vs. prev_size" in garbage-collecting). This skips Python
+        # finalization/GC once the run is complete and logs are flushed.
+        if os.getenv("LLMXROBOT_HARD_EXIT", "").strip().lower() in ("1", "true", "yes", "on"):
+            import sys as _sys, os as _os
+            try:
+                _sys.stdout.flush()
+                _sys.stderr.flush()
+            except Exception:
+                pass
+            _os._exit(0 if _sys.exc_info()[0] is None else 1)
