@@ -78,6 +78,8 @@ cd /path/to/RISCVxLLMxRobot
 
 This writes logs to `src/LLMxRobot/logs/power_profiles/` and prints energy summaries for `VIN_SYS_5V0`, `VDD_GPU_SOC`, and `VDD_CPU_CV`.
 
+Note: `tegrastats --interval <ms>` is a *requested* sampling interval; under load the real interval can drift. The analysis scripts use `tegrastats` timestamps to reconstruct per-sample timing, so baseline windows and energies stay correct even when 100ms sampling isn't achieved.
+
 If your container mounts `src/LLMxRobot` directly at `/embodiedai` (the default in `.docker_utils/main_dock.sh`), the script auto-detects the correct workdir; otherwise pass `--workdir <path-in-container>`.
 
 Stop the profiling at any time with `Ctrl-C` (it terminates the container workload and stops `tegrastats`).
@@ -118,12 +120,39 @@ If `Ctrl-C` still feels “stuck”, the profiler now force-kills lingering `doc
 On some Jetson builds, `llama-cpp-python` can abort or hang during Python interpreter shutdown (after the script “finishes”). In `--segment-llm` mode the profiler automatically sets `LLMXROBOT_HARD_EXIT=1` to avoid that; you can disable it by passing `--env LLMXROBOT_HARD_EXIT=0`.
 
 To re-analyze logs after the fact:
-- Whole-run rail summary: `python3 scripts/summarize_tegrastats.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV`
-- LLM-only per-call CSV: `python3 scripts/summarize_tegrastats_segments.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --run-log src/LLMxRobot/logs/power_profiles/workload_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV --out-csv out.csv`
+- Whole-run rail summary: `python3 scripts/summarize_tegrastats.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --interval-ms <ms> --baseline-s <sec> --baseline-estimator p10 --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV`
+- LLM-only per-call CSV: `python3 scripts/summarize_tegrastats_segments.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --run-log src/LLMxRobot/logs/power_profiles/workload_<timestamp>.log --interval-ms <ms> --baseline-s <sec> --baseline-estimator p10 --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV --out-csv out.csv`
+- Summary statistics from `llm_segments_*.csv`: `python3 scripts/analyze_llm_segments.py src/LLMxRobot/logs/power_profiles/llm_segments_<timestamp>.csv --skip-first 1 --out-json out.json --out-md out.md`
+- Plots (energy/power per decode + full power trace with decode-window markers): `python3 scripts/plot_llm_power.py --logdir src/LLMxRobot/logs/power_profiles --interval-ms <ms> --baseline-s auto --trace-rail VIN_SYS_5V0 --outdir out_plots`
 
 To do a quick sanity run (instead of hours-long `--dataset all`), run a smaller evaluation:
 - Prefer `--mini` (subsampled) and/or a single `--dataset <name>` in `tests.decision_tester.decision_tester`.
 - You can also pass a shorter command to the profiler via `--cmd`, e.g. `--cmd "python3 -m tests.decision_tester.decision_tester --model models/microsoft_Phi-3-mini-4k-instruct-gguf --dataset centerline --quant --mini"`.
+
+---
+
+## 🖥️ Server NVIDIA GPU power profiling
+
+On x86 servers with an NVIDIA GPU, you can log GPU power (via NVML if `pynvml` is installed, otherwise by polling `nvidia-smi`) and compute the same “per decode window” energy/power stats as on Jetson.
+
+1) Run a decode-only workload that emits `LLMXROBOT_EVENT llm_decode_start/end` markers (recommended: `inference.gguf_decode_bench`).
+
+2) From the host, run:
+```bash
+./scripts/profile_nvidia_gpu_power.sh \
+  --gpu 0 --interval-ms 100 --baseline-s 30 --baseline-estimator p10 --segment-llm \
+  --cmd "python3 -m inference.gguf_decode_bench --model_dir models/microsoft_Phi-3-mini-4k-instruct-gguf --prompts data/prompts_centerline_mini.jsonl --limit 50 --hard-exit"
+```
+
+This writes:
+- `src/LLMxRobot/logs/power_profiles_nvidia/gpu_power_*.csv` (timestamped samples)
+- `src/LLMxRobot/logs/power_profiles_nvidia/llm_segments_*.csv` (per decode window energy + delta energy, compatible with `scripts/analyze_llm_segments.py`)
+
+To analyze/plot after the run:
+```bash
+python3 scripts/analyze_llm_segments.py src/LLMxRobot/logs/power_profiles_nvidia/llm_segments_<timestamp>.csv --skip-first 1 --out-md stats.md
+python3 scripts/plot_nvidia_gpu_power.py --logdir src/LLMxRobot/logs/power_profiles_nvidia --outdir out_plots_gpu
+```
 
 ### Create .env File
 Create a `.env` file in the root directory with the following content:
