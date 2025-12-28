@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--n_ctx", type=int, default=4096)
     parser.add_argument("--n_gpu_layers", type=int, default=-1)
     parser.add_argument("--chat_format", type=str, default="chatml")
+    parser.add_argument("--binary-output", action="store_true", help="Enable binary output post-processing (e.g., adherence marker truncation).")
     parser.add_argument("--hard-exit", action="store_true", help="Use os._exit at the end (recommended on Jetson).")
     args = parser.parse_args()
 
@@ -67,7 +68,7 @@ def main():
         max_tokens=args.max_tokens,
         n_ctx=args.n_ctx,
         n_gpu_layers=args.n_gpu_layers,
-        binary_output=False,
+        binary_output=bool(args.binary_output),
     )
 
     def _run_one(idx: int, prompt: str):
@@ -108,4 +109,3 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

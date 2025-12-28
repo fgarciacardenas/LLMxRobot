@@ -106,6 +106,19 @@ python3 -m inference.gguf_decode_bench \
   --limit 50 --hard-exit
 ```
 
+Binary-output mode (prompt style + decode post-processing):
+```bash
+python3 -m tests.decision_tester.export_prompts \
+  --model models/microsoft_Phi-3-mini-4k-instruct-gguf \
+  --dataset centerline --mini --binary_output \
+  --out data/prompts_centerline_mini_binary.jsonl
+
+python3 -m inference.gguf_decode_bench \
+  --model_dir models/microsoft_Phi-3-mini-4k-instruct-gguf \
+  --prompts data/prompts_centerline_mini_binary.jsonl \
+  --binary-output --limit 50 --hard-exit
+```
+
 Then wrap the decode-only benchmark with the host profiler:
 ```bash
 cd /path/to/RISCVxLLMxRobot
