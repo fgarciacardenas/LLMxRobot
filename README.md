@@ -84,17 +84,38 @@ Stop the profiling at any time with `Ctrl-C` (it terminates the container worklo
 
 ### LLM-only energy (exclude prompt/RAG/metrics)
 
-To approximate energy spent *only during GGUF decoding*, enable LLM event markers and integrate power only over those decode windows:
+The most robust way to estimate “LLM-only energy” is to **separate prompt construction from inference**:
+1) Export the prompts you care about (this can include RAG/prompt templating, but runs no LLM).
+2) Run a decode-only benchmark that only does GGUF inference on those prompts, while profiling power.
+
+Export prompts (inside the container):
+```bash
+python3 -m tests.decision_tester.export_prompts \
+  --model models/microsoft_Phi-3-mini-4k-instruct-gguf \
+  --dataset centerline --mini \
+  --out data/prompts_centerline_mini.jsonl
+```
+
+Decode-only benchmark (inside the container):
+```bash
+python3 -m inference.gguf_decode_bench \
+  --model_dir models/microsoft_Phi-3-mini-4k-instruct-gguf \
+  --prompts data/prompts_centerline_mini.jsonl \
+  --limit 50 --hard-exit
+```
+
+Then wrap the decode-only benchmark with the host profiler:
 ```bash
 cd /path/to/RISCVxLLMxRobot
-./scripts/profile_jetson_power.sh --container embodiedai_dock --baseline-s 30 --interval-ms 100 --segment-llm
+./scripts/profile_jetson_power.sh --container embodiedai_dock --baseline-s 30 --interval-ms 100 --segment-llm \
+  --cmd "python3 -m inference.gguf_decode_bench --model_dir models/microsoft_Phi-3-mini-4k-instruct-gguf --prompts data/prompts_centerline_mini.jsonl --limit 50 --hard-exit"
 ```
 
 This prints an extra “LLM-only segment summary” and writes per-call energies to `src/LLMxRobot/logs/power_profiles/llm_segments_*.csv`.
 
 If `Ctrl-C` still feels “stuck”, the profiler now force-kills lingering `docker exec`/`tegrastats` processes after a short timeout (tunable via `--kill-timeout-s`).
 
-On some Jetson builds, `llama-cpp-python` can abort during Python interpreter shutdown (after the script “finishes”). In `--segment-llm` mode the profiler automatically sets `LLMXROBOT_HARD_EXIT=1` to avoid that; you can disable it by passing `--env LLMXROBOT_HARD_EXIT=0`.
+On some Jetson builds, `llama-cpp-python` can abort or hang during Python interpreter shutdown (after the script “finishes”). In `--segment-llm` mode the profiler automatically sets `LLMXROBOT_HARD_EXIT=1` to avoid that; you can disable it by passing `--env LLMXROBOT_HARD_EXIT=0`.
 
 To re-analyze logs after the fact:
 - Whole-run rail summary: `python3 scripts/summarize_tegrastats.py --tegrastats-log src/LLMxRobot/logs/power_profiles/tegrastats_<timestamp>.log --interval-ms <ms> --baseline-samples <N> --rails VIN_SYS_5V0,VDD_GPU_SOC,VDD_CPU_CV`

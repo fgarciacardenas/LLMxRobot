@@ -811,10 +811,9 @@ if __name__ == '__main__':
             # Evaluate the decision making
             evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
     finally:
-        _safe_close(llm)
-        # Workaround for some Jetson/llama-cpp builds crashing during interpreter shutdown
-        # (e.g., "corrupted size vs. prev_size" in garbage-collecting). This skips Python
-        # finalization/GC once the run is complete and logs are flushed.
+        # Workaround for some Jetson/llama-cpp builds either crashing *or hanging* during
+        # shutdown/cleanup. When enabled, skip all Python finalization (and also skip
+        # `llm.close()`, which can block) once logs are written.
         if os.getenv("LLMXROBOT_HARD_EXIT", "").strip().lower() in ("1", "true", "yes", "on"):
             import sys as _sys, os as _os
             try:
@@ -823,3 +822,5 @@ if __name__ == '__main__':
             except Exception:
                 pass
             _os._exit(0 if _sys.exc_info()[0] is None else 1)
+
+        _safe_close(llm)
