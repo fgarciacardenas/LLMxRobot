@@ -28,8 +28,15 @@ def preprocess(text, chat_template="phi-3", answer=False):
             messages = [{"role": "assistant", "content": text}]
         else:
             messages = [{"role": "user", "content": text}]
+    elif isinstance(chat_template, str) and chat_template.startswith("llama"):
+        if answer:
+            messages = [{"role": "assistant", "content": text}]
+        else:
+            messages = [{"role": "user", "content": text}]
     else:
-        raise ValueError(f"Chat template {chat_template} not recognized. Please use 'phi-3' or 'qwen-2.5'.")
+        raise ValueError(
+            f"Chat template {chat_template} not recognized. Please use 'phi-3', 'qwen-2.5', or a 'llama*' template."
+        )
     return messages
 
 def chat_mapping(chat_template="phi-3"):
@@ -37,8 +44,12 @@ def chat_mapping(chat_template="phi-3"):
         return {"role": "from", "content": "value", "user": "human", "assistant": "gpt"}
     elif chat_template == "qwen-2.5":
         return {"role": "role", "content": "content", "user": "user", "assistant": "assistant"}
+    elif isinstance(chat_template, str) and chat_template.startswith("llama"):
+        return {"role": "role", "content": "content", "user": "user", "assistant": "assistant"}
     else:
-        raise ValueError(f"Chat template {chat_template} not recognized. Please use 'phi-3' or 'qwen-2.5'.")
+        raise ValueError(
+            f"Chat template {chat_template} not recognized. Please use 'phi-3', 'qwen-2.5', or a 'llama*' template."
+        )
 
 def load_config(config_path):
     with open(config_path, "r") as f:
