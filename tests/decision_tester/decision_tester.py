@@ -16,8 +16,9 @@ ADHERING_ANY_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGN
 class DecisionTester:
     def __init__(
         self,
-        llm,
-        model_name,
+        llm=None,
+        model_name=None,
+        tokenizer=None,
         all_tests=False,
         mini=False,
         local=True,
@@ -30,11 +31,32 @@ class DecisionTester:
         rag_score_threshold=0.0,
         rag_fetch_k=5,
         binary_output=False,
+        openai_api_token=None,
+        **kwargs,
     ):
+        # Backwards-compatible aliasing for older call sites.
+        if openai_api_token is None:
+            openai_api_token = kwargs.pop("OPENAI_API_TOKEN", None)
+        else:
+            kwargs.pop("OPENAI_API_TOKEN", None)
+        if kwargs:
+            unexpected = ", ".join(sorted(kwargs.keys()))
+            raise TypeError(f"DecisionTester.__init__() got unexpected keyword argument(s): {unexpected}")
+
+        self.openai_api_token = (
+            openai_api_token
+            or os.getenv("OPENAI_API_TOKEN")
+            or os.getenv("OPENAI_API_KEY")
+        )
+
         self.llm = llm
+        if model_name is None:
+            raise TypeError("DecisionTester.__init__() missing required argument: 'model_name'")
         self.model_name = model_name.replace("/", "_")
         self.all_tests = all_tests
         self.mini_eval = mini
+        # Used in log naming for non-all_tests runs as well.
+        self.full_or_mini = "mini" if self.mini_eval else "full"
         self.local_inference = local
         self.use_rag = use_rag
         self.quant = quant
@@ -52,6 +74,11 @@ class DecisionTester:
             if self.rag_offline:
                 self._init_rag_offline()
             else:
+                if not self.openai_api_token:
+                    raise ValueError(
+                        "RAG (online) requires an OpenAI token; set `OPENAI_API_TOKEN`/`OPENAI_API_KEY` "
+                        "or pass `openai_api_token=` to DecisionTester()."
+                    )
                 # Get Memories for the RAG
                 memories_dir = 'prompts/RAG_memory.txt'
                 print(f'Loading memories from {memories_dir}...')
@@ -62,12 +89,12 @@ class DecisionTester:
                     separator='#', keep_separator=False, chunk_overlap=20, chunk_size=100
                 )
                 self.index = VectorstoreIndexCreator(
-                    embedding=OpenAIEmbeddings(api_key=OPENAI_API_TOKEN),
+                    embedding=OpenAIEmbeddings(api_key=self.openai_api_token),
                     text_splitter=self.splitter
                 ).from_loaders([memories_loader])
 
         # Tokenizer online stats
-        self.tokenizer = get_tokenizer(self.model_name)
+        self.tokenizer = tokenizer or get_tokenizer(self.model_name)
         self.prompt_stats_overall = RunningStats()
         self.rag_stats_overall    = RunningStats()
         self.output_stats_overall = RunningStats()
@@ -77,7 +104,6 @@ class DecisionTester:
 
         # Ensure the logs directory exists
         if all_tests:
-            self.full_or_mini = "full" if not self.mini_eval else "mini"
             self.logs_dir = f"tests/decision_tester/logs/{self.model_name}_{self.full_or_mini}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
         else:
             self.logs_dir = "tests/decision_tester/logs/"
@@ -390,6 +416,11 @@ class DecisionTester:
         return None
 
     def eval_decision_making(self, data_dir, llm, data_name):
+        effective_llm = llm or self.llm
+        if effective_llm is None:
+            raise ValueError("No LLM provided: pass `llm=` to eval_decision_making() or `llm=` to DecisionTester().")
+        self.llm = effective_llm
+
         # Load dataset
         print(f" Evaluating decision making on {data_name}")
         data_set = self.load_dataset(data_dir)
@@ -438,7 +469,8 @@ class DecisionTester:
 
                 # Get the model's response
                 if self.local_inference:
-                    llm_response, _, _ = self.llm(prompt)
+                    result = self.llm(prompt)
+                    llm_response = result[0] if isinstance(result, (tuple, list)) else result
                 else:
                     # prompt = " ".join(prompt.split())
                     llm_response = self.llm.invoke(prompt).content
@@ -681,7 +713,12 @@ if __name__ == '__main__':
             from inference.inf_gguf import RaceLLMGGGUF
             # Find gguf in model_dir
             gguf_name = [f for f in os.listdir(model_dir) if f.endswith('.gguf')][0]
-            llm = RaceLLMGGGUF(model_dir=model_dir, gguf_name=gguf_name, binary_output=args.binary_output)
+            llm = RaceLLMGGGUF(
+                model_dir=model_dir,
+                gguf_name=gguf_name,
+                chat_format=chat_template,
+                binary_output=args.binary_output,
+            )
             print(f"Using model {gguf_name} from {model_dir}")
         else:
             if getattr(args, "ax_local", False):
@@ -721,46 +758,69 @@ if __name__ == '__main__':
                 llm = RaceLLMPipeline(model_dir=model_dir, load_in_4bit=True, chat_template=chat_template, binary_output=args.binary_output) # , max_seq_length=2048, max_new_tokes=2048
             print(f"Using model {args.model} from {model_dir}")
 
-    # Evaluate the decision making on all datasets
-    if args.dataset == 'all':
-        evaluator = DecisionTester(
-            llm=llm,
-            model_name=model_name,
-            all_tests=True,
-            mini=args.mini,
-            local=local,
-            use_rag=args.rag,
-            quant=args.quant,
-            rag_offline=args.rag_offline,
-            rag_index=args.rag_index,
-            rag_corpus=args.rag_corpus,
-            rag_max_hits=args.rag_max_hits,
-            rag_score_threshold=args.rag_threshold,
-            rag_fetch_k=args.rag_fetch_k,
-            binary_output=args.binary_output,
-        )
-        for i, dataset in enumerate(possible_datasets):
-            data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
+    def _safe_close(obj):
+        try:
+            close_fn = getattr(obj, "close", None)
+            if callable(close_fn):
+                close_fn()
+        except Exception:
+            pass
+
+    try:
+        # Evaluate the decision making on all datasets
+        if args.dataset == 'all':
+            evaluator = DecisionTester(
+                llm=llm,
+                model_name=model_name,
+                all_tests=True,
+                mini=args.mini,
+                local=local,
+                use_rag=args.rag,
+                quant=args.quant,
+                rag_offline=args.rag_offline,
+                rag_index=args.rag_index,
+                rag_corpus=args.rag_corpus,
+                rag_max_hits=args.rag_max_hits,
+                rag_score_threshold=args.rag_threshold,
+                rag_fetch_k=args.rag_fetch_k,
+                binary_output=args.binary_output,
+            )
+            for i, dataset in enumerate(possible_datasets):
+                data_dir = os.path.join('tests/decision_tester/robot_states', dataset + '.json')
+                # Evaluate the decision making
+                evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=dataset)
+        # Only evaluate on a specific dataset
+        else:
+            evaluator = DecisionTester(
+                llm=llm,
+                model_name=args.model,
+                all_tests=False,
+                mini=args.mini,
+                local=local,
+                use_rag=args.rag,
+                quant=args.quant,
+                rag_offline=args.rag_offline,
+                rag_index=args.rag_index,
+                rag_corpus=args.rag_corpus,
+                rag_max_hits=args.rag_max_hits,
+                rag_score_threshold=args.rag_threshold,
+                rag_fetch_k=args.rag_fetch_k,
+                binary_output=args.binary_output,
+            )
+            data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
             # Evaluate the decision making
-            evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=dataset)
-    # Only evaluate on a specific dataset
-    else:
-        evaluator = DecisionTester(
-            llm=llm,
-            model_name=args.model,
-            all_tests=False,
-            mini=args.mini,
-            local=local,
-            use_rag=args.rag,
-            quant=args.quant,
-            rag_offline=args.rag_offline,
-            rag_index=args.rag_index,
-            rag_corpus=args.rag_corpus,
-            rag_max_hits=args.rag_max_hits,
-            rag_score_threshold=args.rag_threshold,
-            rag_fetch_k=args.rag_fetch_k,
-            binary_output=args.binary_output,
-        )
-        data_dir = os.path.join('tests/decision_tester/robot_states', args.dataset + '.json')
-        # Evaluate the decision making
-        evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
+            evaluator.eval_decision_making(data_dir=data_dir, llm=llm, data_name=args.dataset)
+    finally:
+        # Workaround for some Jetson/llama-cpp builds either crashing *or hanging* during
+        # shutdown/cleanup. When enabled, skip all Python finalization (and also skip
+        # `llm.close()`, which can block) once logs are written.
+        if os.getenv("LLMXROBOT_HARD_EXIT", "").strip().lower() in ("1", "true", "yes", "on"):
+            import sys as _sys, os as _os
+            try:
+                _sys.stdout.flush()
+                _sys.stderr.flush()
+            except Exception:
+                pass
+            _os._exit(0 if _sys.exc_info()[0] is None else 1)
+
+        _safe_close(llm)

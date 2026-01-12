@@ -1,6 +1,9 @@
 from llama_cpp import Llama
 import os
 import re
+import json
+import time
+import datetime
 
 ADHERING_RE = re.compile(r"adhering\s*to\s*human\s*:\s*(true|false)", re.IGNORECASE)
 
@@ -9,16 +12,71 @@ class RaceLLMGGGUF:
         self.max_tokens = max_tokens
         self.path = os.path.join(model_dir, gguf_name)
         self.binary_output = binary_output
+        self.chat_format = self._normalize_chat_format(chat_format)
         self.llm = Llama(
             model_path=self.path,
-            chat_format=chat_format,
+            chat_format=self.chat_format,
             n_gpu_layers=n_gpu_layers,
             n_ctx=n_ctx,
             seed=42,
             verbose=False
             )
 
+    def _emit_event(self, event: str, **fields):
+        """
+        Emit a machine-parsable marker line to stdout when enabled.
+        Used to align external power logs (tegrastats) with LLM decode windows.
+        """
+        if os.getenv("LLMXROBOT_PROFILE_LLM", "").strip().lower() not in ("1", "true", "yes", "on"):
+            return
+        def _jsonable(v):
+            if v is None or isinstance(v, (str, int, float, bool)):
+                return v
+            if isinstance(v, (list, tuple)):
+                return [_jsonable(x) for x in v]
+            if isinstance(v, dict):
+                return {str(k): _jsonable(val) for k, val in v.items()}
+            if callable(v):
+                try:
+                    return _jsonable(v())
+                except Exception:
+                    return str(v)
+            # Best-effort fallbacks for common types
+            try:
+                import numpy as np  # type: ignore
+                if isinstance(v, np.generic):
+                    return v.item()
+            except Exception:
+                pass
+            return str(v)
+
+        try:
+            payload = {
+                "event": event,
+                "t_epoch_s": time.time(),
+                "t_perf_s": time.perf_counter(),
+                "ts": datetime.datetime.now().isoformat(timespec="milliseconds"),
+                **{k: _jsonable(v) for k, v in fields.items()},
+            }
+            print("LLMXROBOT_EVENT " + json.dumps(payload, sort_keys=True), flush=True)
+        except Exception:
+            # Never let profiling markers crash the actual run.
+            return
+
     def __call__(self, input_text):
+        n_ctx = getattr(self.llm, "n_ctx", None)
+        if callable(n_ctx):
+            try:
+                n_ctx = n_ctx()
+            except Exception:
+                n_ctx = None
+        self._emit_event(
+            "llm_decode_start",
+            model_path=self.path,
+            n_ctx=n_ctx,
+            max_tokens=self.max_tokens,
+            prompt_chars=len(input_text) if input_text is not None else None,
+        )
         output = self.llm.create_chat_completion(
             messages=[{
                      "role": "user",
@@ -37,16 +95,72 @@ class RaceLLMGGGUF:
                 out_text = out_text[:m.end()]
         input_tokens = output['usage']['prompt_tokens']
         out_tokens = output['usage']['completion_tokens']
+        self._emit_event(
+            "llm_decode_end",
+            prompt_tokens=input_tokens,
+            completion_tokens=out_tokens,
+        )
         return out_text, input_tokens, out_tokens
 
+    def close(self):
+        llm = getattr(self, "llm", None)
+        if llm is None:
+            return
+        try:
+            close_fn = getattr(llm, "close", None)
+            if callable(close_fn):
+                close_fn()
+        finally:
+            self.llm = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+
+    def _normalize_chat_format(self, chat_format: str) -> str:
+        """
+        Map higher-level template names to llama.cpp registered handlers.
+        phi-3 SFTs use ChatML; qwen-2.5 -> qwen; llama-3.2 -> llama-3.
+        """
+        cf = (chat_format or "").lower()
+        if cf in ("phi-3", "phi3"):
+            return "chatml"
+        if cf in ("qwen-2.5", "qwen2.5", "qwen2", "qwen"):
+            return "qwen"
+        if cf in ("llama-3.2", "llama-3.1", "llama-3", "llama3"):
+            return "llama-3"
+        return cf or "llama-3"
+
     def _build_stop_list(self):
-        base = [
+        base = []
+        # Prefer the chat handler's defaults so we do not override built-in stop tokens (e.g., chatml <|im_end|>)
+        handler = getattr(self.llm, "_chat_handler", None) or getattr(self.llm, "chat_handler", None)
+        handler_stop = getattr(handler, "stop", None)
+        if isinstance(handler_stop, (list, tuple)):
+            base.extend(handler_stop)
+
+        # Legacy generic stops (kept for backwards compatibility)
+        base.extend([
             "[/INST]", "[\\/INST]", "[;/INST] ", "[INST]", "[/?]", "[/Dk]", "[;/Rationale]",
             "[Rationale]", "[;/Action]", "[;/Explanation]",
-        ]
-        if self.binary_output:
-            base.extend(["Adhering to Human: True", "Adhering to Human: False"])
-        return base
+        ])
+        # Drop dupes while preserving order
+        seen = set()
+        deduped = []
+        for s in base:
+            if s not in seen:
+                deduped.append(s)
+                seen.add(s)
+        return deduped
 
 # Loads Prompt with hints
 def load_prompt(prompt_type) -> str:

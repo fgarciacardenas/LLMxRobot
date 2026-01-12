@@ -9,7 +9,7 @@ training:
 
 # === Model and Tokenizer ===
 model:
-  base_model: "nibauman/RobotxLLM_Qwen7B_SFT"
+  base_model: "unsloth/Qwen2.5-7B-Instruct"
   load_in_4bit: true
   max_seq_length: 2048
   lora_alpha: 16

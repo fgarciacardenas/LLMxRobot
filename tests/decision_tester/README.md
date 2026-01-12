@@ -12,6 +12,17 @@
 python3 -m tests.decision_tester.decision_tester --model nibauman/RobotxLLM_Qwen7B_SFT --dataset all --mini --rag
 ```
 
+### **Quick GGUF sanity check (no pipeline)**
+Run from `src/LLMxRobot` to chat directly with a local `.gguf` file:
+```bash
+python3 -m tests.decision_tester.gguf_manual_chat \
+  --model models/race_llm_q5 \
+  --gguf race_llm-Q5_K_M.gguf \
+  --chat-template qwen \
+  --keep-history
+```
+`--model` can point to any folder listed under `models/`. `--gguf` is optional (defaults to the first `.gguf` in the folder), and `--chat-template` defaults to an inferred template matching the model name. For Phi-3 quantized GGUFs, use `--chat-template chatml` (or let the default inference pick it).
+
 ### **Available Arguments:**
 - `--model`: Choose the model (`gpt-4o` or `nibauman/RobotxLLM_Qwen7B_SFT` or any model available from [unsloth](https://huggingface.co/unsloth)).  
 - `--dataset`: Choose the dataset (`all`, `stop`, `reverse`, etc.).  
@@ -105,3 +116,13 @@ Notes:
 - Model label comes from the parent folder prefix (e.g., `Llama3-2_axelera_default` -> `Llama3-2`).
 - Quantization column renders `Q4.M` for GGUF, `INT8` for Axelera, otherwise `FP16` (or `Quantized` when flagged).
 - Model params are auto-filled for known prefixes: Llama3-2 (3.21 B), Phi3 (3.80 B), Qwen2-5-7B (7.61 B), Qwen2-5-3B (3.09 B); otherwise `--`.
+
+## Config-driven LaTeX tables
+To regenerate multiple tables with a specific folder order (and optional `\midrule` separators), use `--tables-config`:
+
+```bash
+python3 src/LLMxRobot/tests/decision_tester/summarize_benchmarks.py \
+  --tables-config src/LLMxRobot/tests/decision_tester/tables_config.example.json
+```
+
+See `src/LLMxRobot/tests/decision_tester/tables_config.example.json` for the schema. The `items` list controls ordering; insert `"midrule"` where you want an extra `\midrule` in the table body.

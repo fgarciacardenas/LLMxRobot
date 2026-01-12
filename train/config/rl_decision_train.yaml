@@ -53,7 +53,7 @@ grpo:
 
 # === Dataset ===
 dataset:
-  raw_robot_states_dir: "/embodiedai/train/dataset/rl_decision/raw_states"
+  raw_robot_states_dir: "train/dataset/rl_decision/raw_states"
   test_cases_path: "train/utils/eval_states.py"
   mem_nb: 5
   shuffle: true
@@ -61,7 +61,7 @@ dataset:
 
 # === Evaluation ===
 evaluation:
-  robot_states_dir: "/embodiedai/tests/decision_tester/robot_states"
+  robot_states_dir: "tests/decision_tester/robot_states"
   use_rag: true
   eval_interval_steps: 400
 
