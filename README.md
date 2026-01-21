@@ -119,6 +119,13 @@ python3 -m inference.gguf_decode_bench \
   --binary-output --limit 50 --hard-exit
 ```
 
+Axelera decode-only benchmark (same prompts JSONL, but runs the Voyager/Axelera interactive REPL):
+```bash
+python3 -m inference.axelera_decode_bench \
+  --prompts data/prompts_centerline_mini_binary.jsonl \
+  --limit 50 --hard-exit
+```
+
 Then wrap the decode-only benchmark with the host profiler:
 ```bash
 cd /path/to/RISCVxLLMxRobot

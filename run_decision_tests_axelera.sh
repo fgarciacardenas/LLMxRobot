@@ -1,17 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Always run relative to this script's directory so imports/paths work
+# regardless of the caller's current working directory.
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+cd "$SCRIPT_DIR"
+
 # Load environment variables from .env if it exists
-if [ -f .env ]; then
+if [ -f "$SCRIPT_DIR/.env" ]; then
   set -a
-  . ./.env
+  . "$SCRIPT_DIR/.env"
+  set +a
+elif [ -f "$REPO_ROOT/.env" ]; then
+  set -a
+  . "$REPO_ROOT/.env"
   set +a
 else
   echo "⚠️ .env file not found. Make sure OPENAI_API_KEY is set in the environment."
 fi
 
 # Define a base directory for logs
-LOG_DIR=./logs
+LOG_DIR="$SCRIPT_DIR/logs"
 mkdir -p "$LOG_DIR"
 
 timestamp() { date +'%Y%m%d_%H%M%S'; }
