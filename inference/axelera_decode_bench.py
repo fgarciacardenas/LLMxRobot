@@ -4,6 +4,7 @@ import os
 import signal
 import sys
 import time
+from pathlib import Path
 
 
 def main() -> int:
@@ -13,7 +14,12 @@ def main() -> int:
     parser.add_argument("--prompts", type=str, required=True, help="JSONL file with {'prompt': ...} lines.")
     parser.add_argument("--limit", type=int, default=0, help="Max prompts to run (0 = all).")
     parser.add_argument("--warmup", type=int, default=1, help="Number of warmup prompts to run (default: 1).")
-    parser.add_argument("--workdir", type=str, default="voyager-sdk", help="Voyager SDK workdir (default: voyager-sdk).")
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        default="auto",
+        help="Voyager SDK workdir. Use 'auto' to locate third_party/voyager-sdk (default: auto).",
+    )
     parser.add_argument("--venv-activate", type=str, default="venv/bin/activate", help="Venv activate script path.")
     parser.add_argument(
         "--run-cmd",
@@ -27,6 +33,31 @@ def main() -> int:
     args = parser.parse_args()
 
     os.environ.setdefault("LLMXROBOT_PROFILE_LLM", "1")
+
+    # Resolve Voyager SDK dir robustly (callers may run from repo root or from src/LLMxRobot).
+    workdir = (args.workdir or "").strip()
+    if workdir.lower() == "auto":
+        repo_root = Path(__file__).resolve().parents[3]
+        candidates = []
+        env_dir = os.getenv("VOYAGER_SDK_DIR", "").strip()
+        if env_dir:
+            candidates.append(Path(env_dir).expanduser())
+        candidates.extend(
+            [
+                repo_root / "third_party" / "voyager-sdk",
+                repo_root / "voyager-sdk",
+                Path.home() / "RISCVxLLMxRobot" / "third_party" / "voyager-sdk",
+            ]
+        )
+        found = next((p for p in candidates if p.is_dir()), None)
+        if not found:
+            cand_str = "\n  - ".join(str(p) for p in candidates)
+            raise SystemExit(
+                "Could not locate Voyager SDK workdir.\n"
+                "Pass --workdir /path/to/third_party/voyager-sdk, or set VOYAGER_SDK_DIR.\n"
+                f"Tried:\n  - {cand_str}"
+            )
+        workdir = str(found)
 
     # Read prompts
     prompts = []
@@ -65,10 +96,10 @@ def main() -> int:
         print("LLMXROBOT_EVENT " + json.dumps(p, sort_keys=True), flush=True)
 
     print(f"[bench] prompts={len(prompts)} warmup={args.warmup} limit={args.limit}", flush=True)
-    print(f"[bench] workdir={args.workdir} venv={args.venv_activate} run_cmd={args.run_cmd}", flush=True)
+    print(f"[bench] workdir={workdir} venv={args.venv_activate} run_cmd={args.run_cmd}", flush=True)
 
     llm = LocalLLMPipeline(
-        workdir=args.workdir,
+        workdir=workdir,
         venv_activate=args.venv_activate,
         run_cmd=args.run_cmd,
         prompt_timeout=args.prompt_timeout,
@@ -133,4 +164,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
