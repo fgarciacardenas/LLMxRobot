@@ -126,6 +126,13 @@ python3 -m inference.axelera_decode_bench \
   --limit 50 --hard-exit
 ```
 
+Hard-cap generated tokens (useful to mimic “binary mode max 8 tokens” experiments):
+```bash
+python3 -m inference.axelera_decode_bench \
+  --prompts data/prompts_centerline_mini_binary.jsonl \
+  --limit 50 --max-new-tokens 8 --hard-exit
+```
+
 Then wrap the decode-only benchmark with the host profiler:
 ```bash
 cd /path/to/RISCVxLLMxRobot

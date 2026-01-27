@@ -1,4 +1,5 @@
 # inference/local_pipeline.py
+import os
 import sys
 import re
 import pexpect
@@ -49,12 +50,15 @@ class LocalLLMPipeline:
 
     def _open_session(self):
         # Start a local bash with a generous timeout for setup
+        # Preserve current environment so we can pass profiling knobs like LLMXROBOT_MAX_NEW_TOKENS.
+        env = dict(os.environ)
+        env["TERM"] = "dumb"
         self.child = pexpect.spawn(
             "bash",
             ["-lc", "exec bash --noprofile --norc"],  # clean shell
             encoding="utf-8",
             timeout=self.login_timeout,
-            env={"TERM": "dumb"},
+            env=env,
         )
         if self.verbose:
             self.child.logfile = sys.stdout
