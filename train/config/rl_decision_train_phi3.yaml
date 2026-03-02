@@ -17,7 +17,7 @@ model:
   base_model: "unsloth/Phi-3-mini-4k-instruct"
   load_in_4bit: true
   max_seq_length: 2048
-  fast_inference: true
+  fast_inference: false
   gpu_memory_utilization: 0.5
   lora_alpha: 64
   target_modules:
@@ -33,7 +33,7 @@ model:
 
 # === GRPO ===
 grpo:
-  use_vllm: true
+  use_vllm: false
   learning_rate: 0.000005
   adam_beta1: 0.9
   adam_beta2: 0.99

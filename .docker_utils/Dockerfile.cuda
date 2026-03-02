@@ -56,7 +56,7 @@ RUN pip install -r /embodiedai/requirements.txt
 RUN git clone --recursive https://github.com/HazyResearch/flash-attention.git /tmp/flash-attn \
  && cd /tmp/flash-attn \
  && git checkout fd2fc9d85c8e54e5c20436465bca709bc1a6c5a1 \
- && pip install . \
+ && pip install . --no-build-isolation \
  && rm -rf /tmp/flash-attn
 
  # CUDA ARCH 86 for RTX3090; 89 for RTX4070

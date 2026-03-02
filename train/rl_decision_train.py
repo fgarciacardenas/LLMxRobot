@@ -233,7 +233,7 @@ def train(cfg):
 
     if train_bool:
         training_args = GRPOConfig(
-            use_vllm=True,
+            use_vllm=cfg["grpo"]["use_vllm"],
             learning_rate=cfg["grpo"]["learning_rate"],
             adam_beta1=cfg["grpo"]["adam_beta1"],
             adam_beta2=cfg["grpo"]["adam_beta2"],
